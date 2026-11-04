@@ -45,6 +45,12 @@
         -webkit-user-select: text;
         user-select: text;
       }
+      /* Le champ est déjà dessiné (pilule grise, cadre) : pas de contour du navigateur par-dessus. */
+      input:focus,
+      textarea:focus,
+      [tabindex]:focus:not(:focus-visible) {
+        outline: none;
+      }
       /* These styles make the root element full-height */
       #root {
         display: flex;
