@@ -102,7 +102,8 @@ const NOMS: Record<Boite, string> = { whatsapp: 'WhatsApp', messenger: 'Messenge
 
 /**
  * Les boîtes branchées, dépliées en colonne au-dessus de l'onglet : WhatsApp
- * au plus près du doigt, puis les autres canaux. Chacune garde sa pastille.
+ * au plus près du doigt, puis les autres canaux. Le logo suffit, sans nom ;
+ * chacun garde sa pastille.
  */
 function Eventail({ boites, boite, centre, bas, compte, onChoisir, onFermer }: {
   boites: Boite[]; boite: Boite; centre: number; bas: number; compte: (b: Boite) => number; onChoisir: (b: Boite) => void; onFermer: () => void
@@ -124,9 +125,6 @@ function Eventail({ boites, boite, centre, bas, compte, onChoisir, onFermer }: {
             <Animated.View key={b} style={{ opacity: v, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [(i + 1) * 18, 0] }) }] }}>
               <Pressable onPress={() => onChoisir(b)} accessibilityRole="radio" accessibilityState={{ checked: b === boite }} accessibilityLabel={NOMS[b]}
                          style={({ pressed }) => [s.boite, pressed && { opacity: 0.8 }]}>
-                <View style={[s.nomBoite, { backgroundColor: wa.fond, borderColor: wa.ligne }]}>
-                  <Text style={[s.nomBoiteTexte, { color: wa.encre, fontWeight: b === boite ? '700' : '500' }]}>{NOMS[b]}</Text>
-                </View>
                 <View style={s.rondBoite}>
                   <LogoCanal nom={b} size={TAILLE} />
                   {n > 0 && (
@@ -200,7 +198,5 @@ const s = StyleSheet.create({
   eventail: { position: 'absolute', width: TAILLE, gap: 10, alignItems: 'center' },
   boite: { flexDirection: 'row', alignItems: 'center' },
   rondBoite: { width: TAILLE, height: TAILLE },
-  nomBoite: { position: 'absolute', right: TAILLE + 8, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 10, paddingVertical: 4, boxShadow: '0 2px 8px rgba(0,0,0,.12)' },
-  nomBoiteTexte: { fontSize: 13 },
   badgeBoite: { top: -6, left: undefined, right: -7, borderWidth: 0 },
 })
