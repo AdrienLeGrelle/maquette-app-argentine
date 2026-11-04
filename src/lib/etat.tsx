@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
-import { conversations as conversationsDemo, type Conversation } from '@/lib/demo'
+import { conversations as conversationsDemo, devis, sejours as sejoursDemo, type Conversation, type Message, type Sejour } from '@/lib/demo'
 import { equipeDemo, type Acces, type Membre } from '@/lib/equipe'
+import { heurePlus, messageConfirmation, montantLien } from '@/lib/paiement'
 
 /**
  * État de la maquette, en mémoire : pas de back pour l'instant. Un
@@ -20,6 +21,9 @@ export const ETAPES_COMPLETES: Etape[] = ['regles', 'mercadopago', 'style', 'can
 
 export type Chambre = { id: string; nom: string; stock: number; prix: string }
 export type Canal = 'instagram' | 'messenger' | 'booking' | 'mail'
+
+/** La notification qui descend en haut du téléphone : un paiement reçu, un lien expiré. */
+export type Notif = { quoi: 'paye' | 'expire'; nom: string; montant: number; convId?: string; n: number }
 
 /** Ce que l'hôtelier renseigne dans Paramètres. */
 export type Config = {
@@ -115,6 +119,16 @@ type Etat = {
   membreVu?: Membre
   /** Ce que la personne qui tient l'app a le droit de voir. Le gérant voit tout. */
   peut: (a: Acces) => boolean
+  /** Le planning : réservations, retenues et blocages. Roomz en est la source de vérité. */
+  sejours: Sejour[]
+  /** Envoyer le lien de paiement préparé pour ce fil : la chambre est retenue trente minutes. */
+  envoyerLien: (convId: string) => void
+  /** Le retour du paiement (le webhook, simulé) : seul lui confirme la réservation. */
+  payer: (sejourId: string) => void
+  /** Personne n'a payé : le lien expire et la chambre est libérée. */
+  expirer: (sejourId: string) => void
+  notif: Notif | null
+  fermerNotif: () => void
 }
 
 /** « Perso » : l'assistant ne répond jamais. Le choix manuel l'emporte sur la règle. */
@@ -135,6 +149,15 @@ function codeAuHasard() {
 function maintenant() {
   const d = new Date()
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+/** Ajouter au fil d'un séjour : on ouvre la journée d'aujourd'hui si le fil datait d'un autre jour. */
+function ajouterAuFil(cs: Conversation[], convId: string, nouveaux: Message[], change: Partial<Conversation>): Conversation[] {
+  return cs.map((c) => (c.id !== convId ? c : {
+    ...c, ...change,
+    quand: { jour: 'hoy', heure: nouveaux[0].heure },
+    messages: [...c.messages, ...nouveaux.map((m, i) => (i === 0 && c.quand.jour !== 'hoy' ? { ...m, jour: 'Aujourd’hui' } : m))],
+  }))
 }
 
 /** La démo s'ouvre déjà connectée, sur les discussions. */
@@ -158,11 +181,50 @@ export function EtatProvider({ children }: { children: ReactNode }) {
   const [ordreFiltres, setOrdreFiltres] = useState(['action', 'agent', 'toutes', 'perso'])
   const [equipe, setEquipe] = useState(equipeDemo)
   const [vue, setVue] = useState<string | null>(null)
+  const [sejours, setSejours] = useState(sejoursDemo)
+  const [notif, setNotif] = useState<Notif | null>(null)
   // Un employé retiré de l'équipe : on revient à la vue du gérant.
   const membreVu = equipe.find((m) => m.id === vue)
 
   const valeur = useMemo<Etat>(() => ({
-    langue, setLangue, tel, code, conecte, convs, categories, config, faites, bulleFermee, montrer, setMontrer, agentLance,
+    langue, setLangue, tel, code, conecte, convs, categories, config, faites, bulleFermee, montrer, setMontrer, agentLance, sejours, notif,
+    fermerNotif: () => setNotif(null),
+    envoyerLien: (convId) => {
+      const d = devis[convId]
+      const c = convs.find((x) => x.id === convId)
+      if (!d || !c) return
+      const heure = maintenant()
+      const jusqua = heurePlus(heure, 30)
+      const id = `lien-${convId}`
+      const lien = { etat: 'retenue' as const, heure, jusqua, montant: montantLien(d.montant, config.paiement) }
+      setSejours((ss) => [...ss, { id, nom: c.nom, ...d, statut: 'attente' as const, canal: 'whatsapp' as const, convId, tel: c.tel, options: [], paye: 0, lien }]
+        .sort((a, b) => a.debut.localeCompare(b.debut)))
+      setConvs((cs) => ajouterAuFil(cs, convId, [{ de: 'hotel', heure, lu: false, lien: { sejour: id, ...d, total: d.montant, montant: lien.montant } }, { de: 'hotel', heure, etape: { quoi: 'retenue', jusqua } }],
+        { colonne: 'unpaid', enCours: true, ecrit: false }))
+    },
+    payer: (sejourId) => {
+      const e = sejours.find((x) => x.id === sejourId)
+      if (!e?.lien) return
+      const heure = maintenant()
+      const montant = e.lien.montant
+      setSejours((ss) => ss.map((x) => (x.id !== sejourId || !x.lien ? x
+        : { ...x, statut: 'confirmee', paye: Math.min(x.montant, x.paye + montant), lien: { ...x.lien, etat: 'payee' } })))
+      if (e.convId) {
+        const c = convs.find((x) => x.id === e.convId)
+        // Le voyageur reçoit sa confirmation, sauf si l'hôtelier a repris la main sur ce fil.
+        const confirmation: Message[] = c && !c.pause ? [{ de: 'hotel', heure, lu: false, texte: messageConfirmation(e, config.arrivee) }] : []
+        setConvs((cs) => ajouterAuFil(cs, e.convId!, [{ de: 'hotel', heure, etape: { quoi: 'paye', montant } }, { de: 'hotel', heure, etape: { quoi: 'confirmee' } }, ...confirmation],
+          { colonne: 'paid', enCours: false, ecrit: false }))
+      }
+      setNotif((n) => ({ quoi: 'paye', nom: e.nom, montant, convId: e.convId, n: (n?.n ?? 0) + 1 }))
+    },
+    expirer: (sejourId) => {
+      const e = sejours.find((x) => x.id === sejourId)
+      if (!e?.lien) return
+      setSejours((ss) => ss.filter((x) => x.id !== sejourId))
+      if (e.convId) setConvs((cs) => ajouterAuFil(cs, e.convId!, [{ de: 'hotel', heure: maintenant(), etape: { quoi: 'expire' } }], { colonne: 'other', enCours: false, ecrit: false }))
+      setNotif((n) => ({ quoi: 'expire', nom: e.nom, montant: e.lien!.montant, convId: e.convId, n: (n?.n ?? 0) + 1 }))
+    },
     lancerAgent: () => setAgentLance(true),
     checkins, regleContacts, setRegleContacts, agent, ordreFiltres, setOrdreFiltres, equipe, vue, setVue, membreVu,
     peut: (a) => !membreVu || membreVu.acces.includes(a),
@@ -203,7 +265,7 @@ export function EtatProvider({ children }: { children: ReactNode }) {
       setCategories((cats) => [...cats, { id, nom, ids }])
       return id
     },
-  }), [langue, tel, code, conecte, convs, categories, config, faites, bulleFermee, montrer, agentLance, checkins, regleContacts, agent, ordreFiltres, equipe, vue, membreVu])
+  }), [langue, tel, code, conecte, convs, categories, config, faites, bulleFermee, montrer, agentLance, checkins, regleContacts, agent, ordreFiltres, equipe, vue, membreVu, sejours, notif])
 
   return <Ctx.Provider value={valeur}>{children}</Ctx.Provider>
 }

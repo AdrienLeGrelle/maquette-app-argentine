@@ -3,7 +3,7 @@ import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop, Text as SvgText } 
 import { marques } from '@/lib/theme'
 
 /** Logos simplifiés des canaux, pour reconnaître d'un coup d'œil ce qu'on coche. */
-export type Logo = 'whatsapp' | 'instagram' | 'messenger' | 'booking' | 'mail'
+export type Logo = 'whatsapp' | 'instagram' | 'messenger' | 'booking' | 'mail' | 'mercadopago'
 
 export function LogoCanal({ nom, size = 36 }: { nom: Logo; size?: number }) {
   const b = marques.blanc
@@ -55,6 +55,13 @@ export function LogoCanal({ nom, size = 36 }: { nom: Logo; size?: number }) {
           <Rect width={36} height={36} rx={9} fill={marques.booking} />
           <SvgText x={10.5} y={26} fontSize={20} fontWeight="700" fill={b}>B</SvgText>
           <Circle cx={25.5} cy={24} r={2.4} fill={marques.bookingPoint} />
+        </Svg>
+      )
+    case 'mercadopago':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 36 36">
+          <Rect width={36} height={36} rx={9} fill={marques.mercadoPago} />
+          <SvgText x={18} y={23} fontSize={13} fontWeight="800" fontFamily="Helvetica, Arial, sans-serif" fill={b} textAnchor="middle">mp</SvgText>
         </Svg>
       )
     case 'mail':

@@ -94,6 +94,10 @@ const waClair = {
   bulleIn: '#FFFFFF',
   bulleMeta: '#667781',
   lu: '#53BDEB',
+  /** Bouton d'un message (« Payer avec Mercado Pago ») : le bleu des liens de WhatsApp. */
+  lienBouton: '#027EB5',
+  /** Le cadre de l'aperçu d'un lien, dans une bulle. */
+  apercuLien: 'rgba(11,20,26,0.06)',
   saisie: '#FFFFFF',
   pastille: '#FFFFFF',
 }
@@ -123,6 +127,8 @@ const waSombre: CouleursWa = {
   bulleIn: '#1F2C34',
   bulleMeta: '#8696A0',
   lu: '#53BDEB',
+  lienBouton: '#53BDEB',
+  apercuLien: 'rgba(255,255,255,0.07)',
   saisie: '#1F2C34',
   pastille: '#1F2C34',
 }
@@ -155,6 +161,8 @@ export const revolut: CouleursWa = {
   bulleIn: 'rgba(255,255,255,0.09)',
   bulleMeta: 'rgba(255,255,255,0.62)',
   lu: '#8EC5FF',
+  lienBouton: '#8EC5FF',
+  apercuLien: 'rgba(255,255,255,0.08)',
   saisie: 'rgba(255,255,255,0.09)',
   pastille: 'rgba(255,255,255,0.09)',
 }

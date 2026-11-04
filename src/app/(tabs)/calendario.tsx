@@ -5,13 +5,13 @@ import Svg, { Circle } from 'react-native-svg'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Repere } from '@/components/Repere'
 import { AUJOURDHUI, INITIALES, JOURS_COURTS, MOIS, casesDuMois, date, ecart } from '@/lib/dates'
-import { UNITES, occupation, sejours, type Sejour } from '@/lib/demo'
+import { UNITES, occupation, type Sejour } from '@/lib/demo'
 import { useEtat } from '@/lib/etat'
 import { Icon } from '@/lib/icons'
 import { num, useCal, type CouleursCal } from '@/lib/theme'
 
 /** Les séjours présents le `jour` : arrivées et nuits en cours d'abord, départs du matin à la fin. */
-function duJour(jour: string) {
+function duJour(jour: string, sejours: Sejour[]) {
   return sejours.filter((s) => s.debut <= jour && jour <= s.fin)
     .sort((a, b) => Number(a.fin === jour) - Number(b.fin === jour))
 }
@@ -33,6 +33,7 @@ export default function Calendrier() {
 
 function CalendrierOuvert() {
   const cal = useCal()
+  const { sejours } = useEtat()
   const aujourdhui = date(AUJOURDHUI)
   const [mois, setMois] = useState({ annee: aujourdhui.getUTCFullYear(), mois: aujourdhui.getUTCMonth() })
   const [choisi, setChoisi] = useState(AUJOURDHUI)
@@ -51,7 +52,7 @@ function CalendrierOuvert() {
 
   const requete = q.trim().toLowerCase()
   const resultats = requete ? sejours.filter((s) => s.statut !== 'bloque' && s.nom.toLowerCase().includes(requete)) : []
-  const jour = duJour(choisi)
+  const jour = duJour(choisi, sejours)
   const d = date(choisi)
 
   return (
@@ -85,7 +86,7 @@ function CalendrierOuvert() {
                 {JOURS_COURTS[d.getUTCDay()]} {d.getUTCDate()} {MOIS[d.getUTCMonth()]}
               </Text>
               <Text style={[s.journeeCompte, num, { color: cal.gris }]}>
-                {occupation(choisi)}/{UNITES} occupées{jour.some((e) => e.fin === choisi) ? ` · ${jour.filter((e) => e.fin === choisi).length} départ${jour.filter((e) => e.fin === choisi).length > 1 ? 's' : ''}` : ''}
+                {occupation(choisi, sejours)}/{UNITES} occupées{jour.some((e) => e.fin === choisi) ? ` · ${jour.filter((e) => e.fin === choisi).length} départ${jour.filter((e) => e.fin === choisi).length > 1 ? 's' : ''}` : ''}
               </Text>
               <Pressable onPress={() => setCherche(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel="Chercher une réservation">
                 <Icon name="search" size={18} color={cal.gris} trait={1.7} />
@@ -138,7 +139,7 @@ function Carte({ cal, e, detail }: { cal: CouleursCal; e: Sejour; detail: string
   const bloque = e.statut === 'bloque'
   const titre = bloque ? `Bloqué · ${e.chambre}` : e.nom
   const arrive = checkins.includes(e.id)
-  const statut = bloque ? e.source ?? 'Bloqué' : e.statut === 'attente' ? 'À payer' : arrive ? 'Arrivé' : 'Confirmée'
+  const statut = bloque ? e.source ?? 'Bloqué' : e.statut === 'attente' ? (e.lien?.etat === 'retenue' ? 'Retenue' : 'À payer') : arrive ? 'Arrivé' : 'Confirmée'
   const sous = [bloque ? null : e.chambre, detail, bloque ? null : `${e.adultes + e.enfants} pers.`].filter(Boolean).join(' · ')
   const t = teintes(cal, e, arrive)
   return (
@@ -163,6 +164,7 @@ function Carte({ cal, e, detail }: { cal: CouleursCal; e: Sejour; detail: string
 function GrilleMois({ cal, annee, mois, choisi, onChoisir, onMois }: {
   cal: CouleursCal; annee: number; mois: number; choisi: string; onChoisir: (j: string) => void; onMois: (sens: number) => void
 }) {
+  const { sejours } = useEtat()
   const cases = casesDuMois(annee, mois)
   return (
     <View style={s.grille}>
@@ -178,7 +180,7 @@ function GrilleMois({ cal, annee, mois, choisi, onChoisir, onMois }: {
           if (!j) return <View key={i} style={s.case} />
           const estAujourdhui = j === AUJOURDHUI
           const estChoisi = j === choisi
-          const occ = occupation(j)
+          const occ = occupation(j, sejours)
           return (
             <Pressable key={j} onPress={() => onChoisir(j)} style={s.case} accessibilityRole="button"
                        accessibilityLabel={`${date(j).getUTCDate()} ${MOIS[mois]}, ${occ} sur ${UNITES} occupées`}>

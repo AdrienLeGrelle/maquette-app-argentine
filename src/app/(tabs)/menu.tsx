@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Repere } from '@/components/Repere'
 import { AUJOURDHUI, plusJours } from '@/lib/dates'
-import { UNITES, occupation, pesos, sejours, statsMois, tableau } from '@/lib/demo'
+import { UNITES, occupation, pesos, statsMois } from '@/lib/demo'
 import { useEtat } from '@/lib/etat'
 import { Icon } from '@/lib/icons'
 import { num, useWa } from '@/lib/theme'
@@ -24,16 +24,17 @@ const APERCU = 3
  */
 export default function Tablero() {
   const wa = useWa()
-  const { ouvrirAgent, config, membreVu, peut } = useEtat()
+  const { ouvrirAgent, config, membreVu, peut, sejours } = useEtat()
   const [question, setQuestion] = useState('')
   const [tout, setTout] = useState(false)
   const envoyer = () => { ouvrirAgent(question.trim() || undefined); setQuestion('') }
 
   const arrivees = sejours.filter((s) => s.debut === AUJOURDHUI && s.statut !== 'bloque')
   const departs = sejours.filter((s) => s.fin === AUJOURDHUI && s.statut !== 'bloque')
-  const occ = occupation(AUJOURDHUI)
+  const occ = occupation(AUJOURDHUI, sejours)
   // À encaisser : les paiements qui restent sur la semaine qui vient.
-  const semaine = tableau.aEncaisser.filter((p) => p.debut <= plusJours(AUJOURDHUI, 7))
+  const semaine = sejours.filter((p) => p.statut === 'attente' && p.fin > AUJOURDHUI && p.montant > p.paye && p.debut <= plusJours(AUJOURDHUI, 7))
+    .map((p) => ({ id: p.id, nom: p.nom, montant: p.montant - p.paye, echeance: `arrivée le ${p.debut.slice(8)}/${p.debut.slice(5, 7)}` }))
   const lignes = [
     ...departs.map((d) => ({ heure: config.depart, quoi: 'Départ', s: d })),
     ...arrivees.map((a) => ({ heure: config.arrivee, quoi: 'Arrivée', s: a })),
@@ -104,7 +105,7 @@ export default function Tablero() {
                 <Pressable key={p.id} onPress={() => router.push({ pathname: '/reservation/[id]', params: { id: p.id } })} style={s.paiement}>
                   <View style={s.flex}>
                     <Text style={[s.creneauTitre, { color: wa.encre }]}>{p.nom}</Text>
-                    <Text style={[s.petit, { color: wa.gris }]}>{p.echeance.fr}</Text>
+                    <Text style={[s.petit, { color: wa.gris }]}>{p.echeance}</Text>
                   </View>
                   <Text style={[s.montant, num, { color: wa.encre }]}>{pesos(p.montant)}</Text>
                 </Pressable>

@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LogoCanal } from '@/components/Logos'
 import { JOURS_COURTS, MOIS, date, ecart } from '@/lib/dates'
-import { pesos, sejours } from '@/lib/demo'
+import { pesos } from '@/lib/demo'
 import { useEtat } from '@/lib/etat'
 import { Icon, type IconName } from '@/lib/icons'
 import { num, useCouleurs, useWa } from '@/lib/theme'
@@ -22,7 +22,7 @@ export default function Reservation() {
   const c = useCouleurs()
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
-  const { checkins, basculerCheckin, config, peut } = useEtat()
+  const { checkins, basculerCheckin, config, peut, sejours } = useEtat()
   const e = sejours.find((x) => x.id === id)
   if (!e) return <Redirect href="/calendario" />
 
@@ -30,7 +30,7 @@ export default function Reservation() {
   const nuits = ecart(e.debut, e.fin)
   const arrive = checkins.includes(e.id)
   const statut = bloque ? { label: `Bloqué par ${e.source}`, fond: wa.champ, encre: wa.gris }
-    : e.statut === 'attente' ? { label: 'À payer', fond: c.warnWash, encre: c.warnInk }
+    : e.statut === 'attente' ? { label: e.lien?.etat === 'retenue' ? `Retenue jusqu’à ${e.lien.jusqua}` : 'À payer', fond: c.warnWash, encre: c.warnInk }
       : { label: 'Confirmée', fond: c.okWash, encre: c.ok }
   const personnes = [`${e.adultes} adulte${e.adultes > 1 ? 's' : ''}`, e.enfants ? `${e.enfants} enfant${e.enfants > 1 ? 's' : ''}` : null].filter(Boolean).join(', ')
 

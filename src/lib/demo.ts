@@ -21,6 +21,35 @@ export type Message = {
   lu?: boolean
   /** Premier message d'une journée : le libellé de la pastille de date au-dessus. */
   jour?: string
+  /** Une carte de paiement Mercado Pago, telle qu'envoyée. */
+  lien?: CarteLien
+  /** Une étape du paiement, en pastille au milieu du fil plutôt qu'en bulle. */
+  etape?: Etape
+}
+
+/**
+ * Les étapes d'un paiement, dans le fil. La réservation n'est confirmée qu'au
+ * retour du paiement, jamais à l'envoi du lien : retenue, puis en attente.
+ */
+export type Etape =
+  | { quoi: 'retenue'; jusqua: string }
+  | { quoi: 'attente' }
+  | { quoi: 'paye'; montant: number }
+  | { quoi: 'confirmee' }
+  | { quoi: 'expire' }
+
+/** Ce que montre la carte : le séjour qu'elle règle, et ce qu'elle demande sur le total. */
+export type CarteLien = { sejour: string; chambre: string; debut: string; fin: string; montant: number; total: number }
+
+/** Le lien de paiement d'un séjour, et où il en est. */
+export type LienPaiement = {
+  etat: 'retenue' | 'attente' | 'payee'
+  /** Heure d'envoi. */
+  heure: string
+  /** Fin de la retenue de la chambre, trente minutes après l'envoi. */
+  jusqua?: string
+  /** Ce que le lien demande : le total ou l'acompte. */
+  montant: number
 }
 
 /** Portraits de démonstration (randomuser.me), pour une liste qui ressemble à un vrai téléphone. */
@@ -73,8 +102,8 @@ const brutes: Conversation[] = [
     id: 'martin', photo: portrait('men/32'), nom: 'Martín Gómez', tel: '+54 9 11 4823-1190', colonne: 'action', nonLus: 2,
     quand: { jour: 'hoy', heure: '13:21' },
     messages: [
-      { de: 'huesped', heure: '13:15', texte: '¡Hola! ¿Tienen lugar del 21 al 24 de noviembre? Somos 2' },
-      { de: 'hotel', heure: '13:16', lu: true, texte: '¡Hola Martín! Sí, para esas fechas tenemos una habitación doble libre: $68.000 por noche con desayuno. Son 3 noches, $204.000 en total. ¿Te la reservo?' },
+      { de: 'huesped', heure: '13:15', texte: '¡Hola! ¿Tienen lugar del 25 al 28 de noviembre? Somos 2' },
+      { de: 'hotel', heure: '13:16', lu: true, texte: '¡Hola Martín! Sí, para esas fechas nos queda una habitación doble: $68.000 por noche con desayuno. Son 3 noches, $204.000 en total. ¿Te la reservo?' },
       { de: 'huesped', heure: '13:20', texte: '¿La perrita puede venir? Es chiquita 🐶' },
       { de: 'huesped', heure: '13:21', texte: '¿Y aceptan efectivo?' },
     ],
@@ -88,12 +117,14 @@ const brutes: Conversation[] = [
   },
   {
     id: 'lucia', photo: portrait('women/68'), nom: 'Lucía Fernández', tel: '+54 9 381 566-0934', colonne: 'unpaid', enCours: true, nonLus: 0,
-    quand: { jour: 'hoy', heure: '12:48' },
+    quand: { jour: 'hoy', heure: '13:10' },
     messages: [
       { de: 'huesped', heure: '12:30', texte: '¡Buenas! Quería reservar la cabaña para 4 del 15 al 17 de diciembre' },
       { de: 'hotel', heure: '12:31', lu: true, texte: '¡Hola Lucía! La cabaña para 4 está libre del 15 al 17/12: 2 noches, $190.000 en total. ¿Te la reservo?' },
-      { de: 'huesped', heure: '12:45', texte: 'Dale, la reservo' },
-      { de: 'hotel', heure: '12:48', lu: true, texte: '¡Genial! Te la dejo bloqueada hasta mañana a las 12:48. Para confirmarla, pagá acá con Mercado Pago: mpago.la/2xK9fQ' },
+      { de: 'huesped', heure: '13:08', texte: 'Dale, la reservo' },
+      { de: 'hotel', heure: '13:10', lu: true, texte: '¡Genial! Te la guardo 30 minutos. Para confirmarla, pagá acá con Mercado Pago 👇' },
+      { de: 'hotel', heure: '13:10', lu: true, lien: { sejour: 's13', chambre: 'Cabane 4', debut: '2026-12-15', fin: '2026-12-17', montant: 190000, total: 190000 } },
+      { de: 'hotel', heure: '13:10', etape: { quoi: 'retenue', jusqua: '13:40' } },
     ],
   },
   {
@@ -109,7 +140,9 @@ const brutes: Conversation[] = [
     quand: { jour: 'ayer', heure: '19:30' },
     messages: [
       { de: 'huesped', heure: '19:22', texte: 'Hola, ¿puedo dejar una seña y el resto lo pago al llegar?' },
-      { de: 'hotel', heure: '19:30', lu: false, texte: '¡Claro, Ramón! Con una seña de $45.000 te guardamos la habitación. Te mando el link de pago: mpago.la/9Hd2Lm' },
+      { de: 'hotel', heure: '19:30', lu: true, texte: '¡Claro, Ramón! Con una seña de $45.000 te guardamos la habitación. Te mando el link de pago 👇' },
+      { de: 'hotel', heure: '19:30', lu: false, lien: { sejour: 's8', chambre: 'Double', debut: '2026-11-07', fin: '2026-11-09', montant: 45000, total: 136000 } },
+      { de: 'hotel', heure: '20:00', etape: { quoi: 'attente' } },
     ],
   },
   {
@@ -205,6 +238,8 @@ export type Sejour = {
   options: string[]
   montant: number
   paye: number
+  /** Le lien Mercado Pago envoyé dans la discussion, s'il y en a un. */
+  lien?: LienPaiement
 }
 
 const sejoursFixes: Sejour[] = [
@@ -215,13 +250,23 @@ const sejoursFixes: Sejour[] = [
   { id: 's5', nom: 'Nahuel Quispe', chambre: 'Dortoir', debut: '2026-10-31', fin: '2026-11-01', statut: 'confirmee', canal: 'whatsapp', convId: 'nahuel', tel: '+54 9 388 430-2271', adultes: 1, enfants: 0, options: [], montant: 18000, paye: 18000 },
   { id: 's6', nom: 'Silvia Ruiz', chambre: 'Double', debut: '2026-11-02', fin: '2026-11-04', statut: 'confirmee', canal: 'whatsapp', convId: 'silvia', tel: '+54 9 351 702-4485', adultes: 2, enfants: 0, options: ['Petit-déjeuner'], montant: 136000, paye: 136000 },
   { id: 's7', nom: 'Airbnb', chambre: 'Dortoir', debut: '2026-11-06', fin: '2026-11-09', statut: 'bloque', source: 'Airbnb', canal: 'airbnb', adultes: 1, enfants: 0, options: [], montant: 54000, paye: 54000 },
-  { id: 's8', nom: 'Ramón Díaz', chambre: 'Double', debut: '2026-11-07', fin: '2026-11-09', statut: 'attente', canal: 'whatsapp', convId: 'ramon', tel: '+54 9 388 619-0072', adultes: 2, enfants: 1, options: ['Animal (chien)'], montant: 136000, paye: 0 },
+  { id: 's8', nom: 'Ramón Díaz', chambre: 'Double', debut: '2026-11-07', fin: '2026-11-09', statut: 'attente', canal: 'whatsapp', convId: 'ramon', tel: '+54 9 388 619-0072', adultes: 2, enfants: 1, options: ['Animal (chien)'], montant: 136000, paye: 0, lien: { etat: 'attente', heure: '19:30', montant: 45000 } },
   { id: 's9', nom: 'Hilda Mamani', chambre: 'Cabane 4', debut: '2026-11-08', fin: '2026-11-10', statut: 'confirmee', canal: 'whatsapp', convId: 'hilda', tel: '+54 9 388 245-8813', adultes: 3, enfants: 1, options: ['Petit-déjeuner', 'Parking'], montant: 190000, paye: 190000 },
   { id: 's10', nom: 'Juan Pérez', chambre: 'Double', debut: '2026-11-12', fin: '2026-11-15', statut: 'confirmee', canal: 'instagram', adultes: 2, enfants: 0, options: [], montant: 204000, paye: 204000 },
   { id: 's11', nom: 'Carla Méndez', chambre: 'Dortoir', debut: '2026-11-20', fin: '2026-11-22', statut: 'confirmee', canal: 'whatsapp', tel: '+54 9 11 5520-3348', adultes: 1, enfants: 0, options: [], montant: 36000, paye: 36000 },
   { id: 's12', nom: 'Booking', chambre: 'Cabane 4', debut: '2026-11-27', fin: '2026-11-30', statut: 'bloque', source: 'Booking', canal: 'booking', adultes: 4, enfants: 0, options: [], montant: 285000, paye: 285000 },
-  { id: 's13', nom: 'Lucía Fernández', chambre: 'Cabane 4', debut: '2026-12-15', fin: '2026-12-17', statut: 'attente', canal: 'whatsapp', convId: 'lucia', tel: '+54 9 381 566-0934', adultes: 4, enfants: 0, options: [], montant: 190000, paye: 0 },
+  { id: 's13', nom: 'Lucía Fernández', chambre: 'Cabane 4', debut: '2026-12-15', fin: '2026-12-17', statut: 'attente', canal: 'whatsapp', convId: 'lucia', tel: '+54 9 381 566-0934', adultes: 4, enfants: 0, options: [], montant: 190000, paye: 0, lien: { etat: 'retenue', heure: '13:10', jusqua: '13:40', montant: 190000 } },
 ]
+
+/**
+ * Ce que l'assistant a préparé pour un fil, prêt à partir en lien de paiement
+ * une fois validé par l'hôtelier. Martín prend la dernière double : l'IA ne
+ * confirme jamais seule sur la dernière unité.
+ */
+export type Devis = { chambre: string; debut: string; fin: string; adultes: number; enfants: number; montant: number }
+export const devis: Record<string, Devis> = {
+  martin: { chambre: 'Double', debut: '2026-11-25', fin: '2026-11-28', adultes: 2, enfants: 0, montant: 204000 },
+}
 
 /** Ce que l'assistant d'aide sait montrer : des mots-clés, une réponse, et où aller. */
 export type Aide = { mots: string[]; reponse: string; route: '/' | '/calendario' | '/menu' | '/ajustes'; repere: string; bouton: string }
@@ -373,8 +418,8 @@ function genererSejours(): Sejour[] {
 export const sejours: Sejour[] = genererSejours()
 
 /** Unités occupées la nuit du `jour`, toujours ≤ stock. */
-export function occupation(jour: string) {
-  return sejours.filter((s) => s.debut <= jour && jour < s.fin).length
+export function occupation(jour: string, liste = sejours) {
+  return liste.filter((s) => s.debut <= jour && jour < s.fin).length
 }
 
 const JOURS_ES = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb']
@@ -392,8 +437,6 @@ export const tableau = {
     libres: stock - sejours.filter((s) => s.chambre === type && s.debut <= AUJ && AUJ < s.fin).length,
     stock,
   })),
-  aEncaisser: sejours.filter((s) => s.statut === 'attente' && s.fin > AUJ && s.montant > s.paye)
-    .map((s) => ({ id: s.id, debut: s.debut, nom: s.nom, montant: s.montant - s.paye, echeance: { es: `llega el ${s.debut.slice(8)}/${s.debut.slice(5, 7)}`, fr: `arrivée le ${s.debut.slice(8)}/${s.debut.slice(5, 7)}` } })),
   semaine: Array.from({ length: 7 }, (_, k) => {
     const j = plus(AUJ, k); const d = new Date(j + 'T00:00:00Z').getUTCDay()
     return { es: JOURS_ES[d], fr: JOURS_FR[d], occ: occupation(j) }

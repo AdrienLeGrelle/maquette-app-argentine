@@ -3,6 +3,7 @@ import { Fragment, useEffect, useRef, useState, type ComponentRef } from 'react'
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Brouillons } from '@/components/Brouillons'
+import { BarreReservation, CarteLien, PastilleEtape, ProposerLien } from '@/components/Paiement'
 import { Points } from '@/components/Points'
 import type { Message } from '@/lib/demo'
 import { brouillonsPerso } from '@/lib/perso'
@@ -16,9 +17,10 @@ export default function Chat() {
   const t = useT()
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
-  const { convs, lire, envoyer, agentLance, regleContacts, mettrePourMoi, reprendreMain, membreVu } = useEtat()
+  const { convs, lire, envoyer, agentLance, regleContacts, mettrePourMoi, reprendreMain, membreVu, peut } = useEtat()
   const [texte, setTexte] = useState('')
   const [ecriture, setEcriture] = useState(false)
+  const [lienIgnore, setLienIgnore] = useState(false)
   const defile = useRef<ComponentRef<typeof ScrollView>>(null)
   const champ = useRef<ComponentRef<typeof TextInput>>(null)
   const c = convs.find((x) => x.id === id)
@@ -78,13 +80,17 @@ export default function Chat() {
         </View>
       )}
 
+      <BarreReservation convId={c.id} />
+
       <ScrollView ref={defile} contentContainerStyle={s.fil}
                   onContentSizeChange={() => defile.current?.scrollToEnd({ animated: false })}>
         {!c.messages[0]?.jour && <Pastille texte={jour} />}
         {c.messages.map((m, i) => (
           <Fragment key={i}>
             {m.jour && <Pastille texte={m.jour} />}
-            <Bulle m={m} suite={i > 0 && !m.jour && c.messages[i - 1].de === m.de} />
+            {m.etape ? <PastilleEtape etape={m.etape} />
+              : m.lien ? <CarteLien m={{ ...m, lien: m.lien }} suite={i > 0 && !m.jour && c.messages[i - 1].de === m.de && !c.messages[i - 1].etape} />
+                : <Bulle m={m} suite={i > 0 && !m.jour && c.messages[i - 1].de === m.de && !c.messages[i - 1].etape} />}
           </Fragment>
         ))}
         {ecrit && (
@@ -93,6 +99,10 @@ export default function Chat() {
           </View>
         )}
       </ScrollView>
+
+      {!moi && peut('reservations') && !lienIgnore && !ecriture && !texte && (
+        <ProposerLien convId={c.id} onIgnorer={() => setLienIgnore(true)} />
+      )}
 
       {propositions && !ecriture && !texte && (
         <Brouillons propositions={propositions} onEnvoyer={(p) => envoyer(c.id, p)} onCorriger={corriger} />

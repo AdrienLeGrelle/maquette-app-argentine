@@ -8,7 +8,8 @@ import { BoutonAgent } from '@/components/Agent'
 import { Glisser } from '@/components/Glisser'
 import { Triables, type PoigneeTri } from '@/components/Triables'
 import { Repere } from '@/components/Repere'
-import type { Conversation } from '@/lib/demo'
+import { useTexteEtape } from '@/components/Paiement'
+import { pesos, type Conversation } from '@/lib/demo'
 import { estPourMoi, useEtat, useT, type Categorie } from '@/lib/etat'
 import { Avatar, Icon, type IconName } from '@/lib/icons'
 import { useWa } from '@/lib/theme'
@@ -189,12 +190,14 @@ function Rond({ icon }: { icon: IconName }) {
 function Ligne({ c }: { c: Conversation }) {
   const wa = useWa()
   const t = useT()
-  const { agentLance } = useEtat()
+  const { agentLance, peut } = useEtat()
+  const texteEtape = useTexteEtape()
   const ecrit = c.ecrit && agentLance && !c.pause
   const q = c.quand
   const quand = q.jour === 'date' ? q.date : q.jour === 'semaine' ? t(q.es, q.fr) : q.jour === 'ayer' ? t('Ayer', 'Hier') : q.heure
   const nonLu = c.nonLus > 0
-  const d = c.messages[c.messages.length - 1]
+  // L'aperçu montre le lien envoyé plutôt que « retenue » ou « en attente » ; une issue (confirmée, expiré) passe devant.
+  const d = c.messages.findLast((m) => !m.etape || m.etape.quoi === 'confirmee' || m.etape.quoi === 'expire') ?? c.messages[c.messages.length - 1]
 
   return (
     <Pressable onPress={() => router.push({ pathname: '/chat/[id]', params: { id: c.id } })}
@@ -213,10 +216,12 @@ function Ligne({ c }: { c: Conversation }) {
             </View>
           ) : (
             <Text numberOfLines={2} style={[s.apercu, { color: wa.gris }]}>
-              {d.de === 'hotel' && <><Icon name="checks" size={16} color={d.lu ? wa.lu : wa.gris} />{' '}</>}
+              {d.de === 'hotel' && !d.etape && <><Icon name="checks" size={16} color={d.lu ? wa.lu : wa.gris} />{' '}</>}
               {d.vocal
                 ? <><Icon name="mic" size={15} color={wa.vert} plein />{' '}{t(`Mensaje de voz (${d.vocal})`, `Message vocal (${d.vocal})`)}</>
-                : d.texte}
+                : d.etape ? texteEtape(d.etape)
+                  : d.lien ? <><Icon name="card" size={15} color={wa.gris} />{' '}{t('Enlace de pago', 'Lien de paiement')}{peut('paiements') ? ` · ${pesos(d.lien.montant)}` : ''}</>
+                    : d.texte}
             </Text>
           )}
           <View style={s.marques}>
