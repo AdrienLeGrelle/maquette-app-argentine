@@ -1,6 +1,6 @@
 import { router } from 'expo-router'
 import { useState, type ReactNode } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Repere } from '@/components/Repere'
 import { AUJOURDHUI, plusJours } from '@/lib/dates'
@@ -25,9 +25,7 @@ const APERCU = 3
 export default function Tablero() {
   const wa = useWa()
   const { ouvrirAgent, config, membreVu, peut, sejours } = useEtat()
-  const [question, setQuestion] = useState('')
   const [tout, setTout] = useState(false)
-  const envoyer = () => { ouvrirAgent(question.trim() || undefined); setQuestion('') }
 
   const arrivees = sejours.filter((s) => s.debut === AUJOURDHUI && s.statut !== 'bloque')
   const departs = sejours.filter((s) => s.fin === AUJOURDHUI && s.statut !== 'bloque')
@@ -43,15 +41,15 @@ export default function Tablero() {
   return (
     <SafeAreaView edges={['top']} style={[s.flex, { backgroundColor: wa.fond }]}>
       <ScrollView contentContainerStyle={s.contenu} keyboardShouldPersistTaps="handled">
-        <View style={[s.question, { backgroundColor: wa.champ }]}>
+        {/* Toucher la barre ouvre tout de suite la discussion avec l'assistant, où l'on écrit. */}
+        <Pressable onPress={() => ouvrirAgent()} accessibilityRole="button" accessibilityLabel="Poser une question à l’assistant Roomz"
+                   style={({ pressed }) => [s.question, { backgroundColor: wa.champ }, pressed && { opacity: 0.7 }]}>
           <Icon name="sparkles" size={20} color={wa.vert} plein />
-          <TextInput value={question} onChangeText={setQuestion} placeholder="Posez votre question à l’assistant…"
-                     placeholderTextColor={wa.gris} returnKeyType="send" accessibilityLabel="Question pour l’assistant Roomz"
-                     onSubmitEditing={envoyer} style={[s.questionChamp, { color: wa.encre }]} />
-          <Pressable onPress={envoyer} accessibilityRole="button" accessibilityLabel="Envoyer" style={[s.questionEnvoyer, { backgroundColor: wa.vert }]}>
+          <Text numberOfLines={1} style={[s.questionChamp, { color: wa.gris }]}>Posez votre question à l’assistant…</Text>
+          <View style={[s.questionEnvoyer, { backgroundColor: wa.vert }]}>
             <Icon name="send" size={16} color={wa.surVert} plein />
-          </Pressable>
-        </View>
+          </View>
+        </Pressable>
 
         <Text style={[s.salut, { color: wa.encre }]}>Bonjour {membreVu?.prenom ?? (config.prenom || 'Hermine')},</Text>
         <Text style={[s.resume, { color: wa.gris }]}>
@@ -146,7 +144,7 @@ const s = StyleSheet.create({
   gras: { fontWeight: '700' },
   contenu: { padding: 16, paddingTop: 12, gap: 18, paddingBottom: 32 },
   question: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 999, paddingLeft: 16, paddingRight: 5, height: 50 },
-  questionChamp: { flex: 1, fontSize: 16, height: 48 },
+  questionChamp: { flex: 1, fontSize: 16 },
   questionEnvoyer: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   salut: { fontSize: 28, fontWeight: '700', marginTop: 4 },
   resume: { fontSize: 17, lineHeight: 25, marginTop: -8 },

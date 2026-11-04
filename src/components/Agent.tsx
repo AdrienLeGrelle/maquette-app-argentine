@@ -84,6 +84,7 @@ export function AgentDemiEcran() {
   const [texte, setTexte] = useState('')
   const [ecrit, setEcrit] = useState(false)
   const defile = useRef<ComponentRef<typeof ScrollView>>(null)
+  const champ = useRef<ComponentRef<typeof TextInput>>(null)
   const minuteur = useRef<ReturnType<typeof setTimeout>>(undefined)
   const dejaPosee = useRef(0)
 
@@ -108,6 +109,13 @@ export function AgentDemiEcran() {
       demander(agent.question)
     }
   })
+
+  // À l'ouverture, le curseur est déjà dans le champ : on écrit tout de suite.
+  useEffect(() => {
+    if (!agent.ouvert) return
+    const t = setTimeout(() => champ.current?.focus(), 60)
+    return () => clearTimeout(t)
+  }, [agent.ouvert, agent.n])
 
   if (!agent.ouvert) return null
 
@@ -162,7 +170,7 @@ export function AgentDemiEcran() {
         </ScrollView>
 
         <View style={[s.saisie, { borderTopColor: wa.ligne }]}>
-          <TextInput value={texte} onChangeText={setTexte} onSubmitEditing={() => demander(texte)}
+          <TextInput ref={champ} value={texte} onChangeText={setTexte} onSubmitEditing={() => demander(texte)}
                      placeholder="J’aimerais faire…" placeholderTextColor={wa.gris} accessibilityLabel="Votre question"
                      style={[s.champ, { backgroundColor: wa.champ, color: wa.encre }]} />
           <Pressable onPress={() => demander(texte)} accessibilityRole="button" accessibilityLabel="Envoyer"
