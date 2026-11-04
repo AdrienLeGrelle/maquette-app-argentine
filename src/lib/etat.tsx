@@ -64,7 +64,8 @@ const configVide: Config = {
   prenom: '', role: null, hotel: '', ville: '', type: null, site: '', sansSite: false, booking: '', google: '', analyse: false, options: [], aime: [],
   chambres: [], chambresDuSite: false, arrivee: '14 h', depart: '10 h', animaux: false, enfants: true,
   paiement: 'Le total', mercadoPago: false, style: 'toutes', styleIds: [],
-  canaux: { instagram: false, messenger: false, booking: false, mail: false },
+  // Démo : Instagram et Messenger déjà branchés, pour montrer l'éventail des boîtes dès l'ouverture.
+  canaux: { instagram: true, messenger: true, booking: false, mail: false },
 }
 
 type Etat = {
