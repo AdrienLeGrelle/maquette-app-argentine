@@ -98,7 +98,7 @@ export default function Ajustes() {
                   fait={fait('style')} onPress={() => ouvrir('style')} dernier />
         </Section>
 
-        <Section titre="Zone « Pour moi »">
+        <Section titre="Zone « Perso »">
           <View style={s.regle}>
             <Interrupteur label="Contacts enregistrés : pour moi" valeur={regleContacts} onChange={setRegleContacts}
                           sous="Banque, fournisseurs, équipe… L’assistant ne répond qu’aux numéros inconnus. Glissez une discussion à gauche pour changer au cas par cas." />

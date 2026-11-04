@@ -37,7 +37,7 @@ export type Conversation = {
   photo?: string
   /** Contact enregistré dans le téléphone (banque, fournisseur, équipe…). */
   enregistre?: boolean
-  /** Choix manuel : true = « Pour moi », false = confié à l'assistant ; absent = la règle décide. */
+  /** Choix manuel : true = « Perso », false = confié à l'assistant ; absent = la règle décide. */
   pourMoi?: boolean
   /** L'hôtelier a repris la main : l'assistant ne répond plus sur ce fil. */
   pause?: boolean
@@ -132,6 +132,46 @@ export const conversations: Conversation[] = [
       { de: 'huesped', heure: '18:41', vocal: '0:12' },
     ],
   },
+  {
+    id: 'mama', photo: portrait('women/90'), nom: 'Mamá', tel: '+54 9 388 401-2236', colonne: 'other', nonLus: 2, enregistre: true,
+    quand: { jour: 'hoy', heure: '11:47' },
+    messages: [{ de: 'huesped', heure: '11:47', texte: '¿Vienen el domingo a almorzar? Hago empanadas 🥟' }],
+  },
+  {
+    id: 'pablo', photo: portrait('men/41'), nom: 'Pablo (hermano)', tel: '+54 9 11 6012-8873', colonne: 'other', nonLus: 0, enregistre: true,
+    quand: { jour: 'hoy', heure: '09:15' },
+    messages: [{ de: 'huesped', heure: '09:15', texte: 'Te devuelvo la camioneta el jueves, ¿dale?' }],
+  },
+  {
+    id: 'ruben', nom: 'Rubén plomero', tel: '+54 9 388 470-3381', colonne: 'other', nonLus: 1, enregistre: true,
+    quand: { jour: 'hoy', heure: '08:32' },
+    messages: [{ de: 'huesped', heure: '08:32', texte: 'Paso a las 15 por el calefón de la cabaña' }],
+  },
+  {
+    id: 'marcelo', photo: portrait('men/67'), nom: 'Marcelo · Gas del Norte', tel: '+54 9 388 422-1190', colonne: 'other', nonLus: 0, enregistre: true,
+    quand: { jour: 'ayer', heure: '17:40' },
+    messages: [{ de: 'huesped', heure: '17:40', texte: 'El viernes reponemos las garrafas' }],
+  },
+  {
+    id: 'lavanderia', nom: 'Lavandería Norte', tel: '+54 9 388 455-7722', colonne: 'other', nonLus: 0, enregistre: true,
+    quand: { jour: 'ayer', heure: '12:05' },
+    messages: [{ de: 'huesped', heure: '12:05', texte: 'Ya están listas las sábanas, 42 juegos' }],
+  },
+  {
+    id: 'ines', photo: portrait('women/57'), nom: 'Inés contadora', tel: '+54 9 388 430-9914', colonne: 'other', nonLus: 1, enregistre: true,
+    quand: { jour: 'semaine', es: 'martes', fr: 'mardi' },
+    messages: [{ de: 'huesped', heure: '10:00', texte: 'Necesito las facturas de octubre antes del 10' }],
+  },
+  {
+    id: 'rocio', photo: portrait('women/33'), nom: 'Rocío (limpieza)', tel: '+54 9 388 618-2045', colonne: 'other', nonLus: 0, enregistre: true,
+    quand: { jour: 'semaine', es: 'lunes', fr: 'lundi' },
+    messages: [{ de: 'huesped', heure: '10:00', texte: 'Mañana llego 8:30, termino la cabaña 2 primero' }],
+  },
+  {
+    id: 'fede', photo: portrait('men/23'), nom: 'Fede', tel: '+54 9 11 3302-6610', colonne: 'other', nonLus: 0, enregistre: true,
+    quand: { jour: 'semaine', es: 'domingo', fr: 'dimanche' },
+    messages: [{ de: 'huesped', heure: '10:00', texte: '¿Partido el sábado? Faltamos dos' }],
+  },
 ]
 
 /** « $ 190.000 » : pesos, séparateur de milliers à l'argentine. */
@@ -183,7 +223,7 @@ export const aides: Aide[] = [
   { mots: ['reserv', 'nouvelle', 'ajouter un client', 'booker'], route: '/', repere: 'nouvelleReservation', bouton: 'Me montrer',
     reponse: 'Pour créer une réservation vous-même, touchez le + vert en haut à droite des Discussions. Vous pouvez aussi le faire depuis le Calendrier, avec le + en bas à droite.' },
   { mots: ['categor', 'liste', 'filtre', 'ranger', 'trier'], route: '/', repere: 'categorie', bouton: 'Me montrer',
-    reponse: 'Touchez le + à droite des filtres (Action requise, En cours, Toutes). Donnez un nom, cochez les discussions : c’est fait.' },
+    reponse: 'Touchez le + à droite des filtres (Action requise, Agent, Toutes, Perso). Pour les réordonner, appui long sur une puce puis glissez-la. Donnez un nom, cochez les discussions : c’est fait.' },
   { mots: ['dispo', 'libre', 'place', 'calendrier', 'planning', 'occup', 'agenda'], route: '/calendario', repere: 'moisCalendrier', bouton: 'Ouvrir le calendrier',
     reponse: 'Le Calendrier montre toutes les réservations, jour par jour. Touchez le nom du mois en haut pour voir le mois entier.' },
   { mots: ['prix', 'tarif', 'chambre', 'stock'], route: '/ajustes', repere: 'chambres', bouton: 'Me montrer',

@@ -26,9 +26,9 @@ export default function Chat() {
 
   const moi = estPourMoi(c, regleContacts)
   const ecrit = !!c.ecrit && agentLance && !c.pause && !moi
-  // Qui tient le fil : « Pour moi », l'hôtelier (pause) ou l'assistant.
+  // Qui tient le fil : « Perso », l'hôtelier (pause) ou l'assistant.
   const tenue = moi
-    ? { icon: 'lock' as const, texte: 'Pour moi : pas de réponse auto', bouton: 'Confier à l’assistant', action: () => mettrePourMoi(c.id, false), couleur: wa.zoneMoi }
+    ? { icon: 'lock' as const, texte: 'Perso : pas de réponse auto', bouton: 'Confier à l’agent', action: () => mettrePourMoi(c.id, false), couleur: wa.zoneMoi }
     : !agentLance ? null
       : c.pause
         ? { icon: 'hand' as const, texte: 'Vous avez la main', bouton: 'Rendre à l’assistant', action: () => reprendreMain(c.id, false), couleur: wa.gris }

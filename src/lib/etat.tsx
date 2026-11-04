@@ -86,18 +86,23 @@ type Etat = {
   /** Les séjours dont l'arrivée a été faite (check-in). */
   checkins: string[]
   basculerCheckin: (id: string) => void
-  /** Règle : les contacts enregistrés vont dans « Pour moi ». */
+  /** Règle : les contacts enregistrés vont dans « Perso ». */
   regleContacts: boolean
   setRegleContacts: (v: boolean) => void
   mettrePourMoi: (id: string, v: boolean) => void
   reprendreMain: (id: string, v: boolean) => void
+  /** Confier une discussion à l'agent : elle quitte « Perso » et l'agent reprend la main. */
+  confierAgent: (id: string) => void
+  /** L'ordre des puces de filtre, que l'hôtelier change en les faisant glisser. */
+  ordreFiltres: string[]
+  setOrdreFiltres: (o: string[]) => void
   /** Le demi-écran de l'assistant ; `question` est posée dès l'ouverture. */
   agent: { ouvert: boolean; question?: string; n: number }
   ouvrirAgent: (question?: string) => void
   fermerAgent: () => void
 }
 
-/** « Pour moi » : l'assistant ne répond jamais. Le choix manuel l'emporte sur la règle. */
+/** « Perso » : l'assistant ne répond jamais. Le choix manuel l'emporte sur la règle. */
 export function estPourMoi(c: Conversation, regleContacts: boolean) {
   return c.pourMoi ?? (regleContacts && !!c.enregistre)
 }
@@ -135,11 +140,13 @@ export function EtatProvider({ children }: { children: ReactNode }) {
   const [checkins, setCheckins] = useState<string[]>([])
   const [regleContacts, setRegleContacts] = useState(true)
   const [agent, setAgent] = useState<{ ouvert: boolean; question?: string; n: number }>({ ouvert: false, n: 0 })
+  const [ordreFiltres, setOrdreFiltres] = useState(['action', 'agent', 'toutes', 'perso'])
 
   const valeur = useMemo<Etat>(() => ({
     langue, setLangue, tel, code, conecte, convs, categories, config, faites, bulleFermee, montrer, setMontrer, agentLance,
     lancerAgent: () => setAgentLance(true),
-    checkins, regleContacts, setRegleContacts, agent,
+    checkins, regleContacts, setRegleContacts, agent, ordreFiltres, setOrdreFiltres,
+    confierAgent: (id) => setConvs((cs) => cs.map((c) => (c.id === id ? { ...c, pourMoi: false, pause: false, enCours: true } : c))),
     ouvrirAgent: (question) => setAgent((a) => ({ ouvert: true, question, n: a.n + 1 })),
     fermerAgent: () => setAgent((a) => ({ ...a, ouvert: false, question: undefined })),
     mettrePourMoi: (id, v) => setConvs((cs) => cs.map((c) => (c.id === id ? { ...c, pourMoi: v, ecrit: v ? false : c.ecrit } : c))),
@@ -172,7 +179,7 @@ export function EtatProvider({ children }: { children: ReactNode }) {
       setCategories((cats) => [...cats, { id, nom, ids }])
       return id
     },
-  }), [langue, tel, code, conecte, convs, categories, config, faites, bulleFermee, montrer, agentLance, checkins, regleContacts, agent])
+  }), [langue, tel, code, conecte, convs, categories, config, faites, bulleFermee, montrer, agentLance, checkins, regleContacts, agent, ordreFiltres])
 
   return <Ctx.Provider value={valeur}>{children}</Ctx.Provider>
 }
