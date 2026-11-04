@@ -22,7 +22,7 @@ export default function Reservation() {
   const c = useCouleurs()
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
-  const { checkins, basculerCheckin, config } = useEtat()
+  const { checkins, basculerCheckin, config, peut } = useEtat()
   const e = sejours.find((x) => x.id === id)
   if (!e) return <Redirect href="/calendario" />
 
@@ -75,9 +75,9 @@ export default function Reservation() {
         <Section titre="Commande">
           <Ligne icon="bed" label="Chambre" valeur={`${e.chambre} × 1`} />
           {!bloque && <Ligne icon="user" label="Personnes" valeur={personnes} />}
-          {!bloque && <Ligne icon="sparkles" label="Options" valeur={e.options.length ? e.options.join(', ') : 'Aucune'} />}
-          {!bloque && <Ligne icon="card" label="Montant" valeur={pesos(e.montant)} nombre />}
-          {!bloque && <Ligne icon="checkPlain" label="Déjà payé" valeur={pesos(e.paye)} nombre dernier
+          {!bloque && <Ligne icon="sparkles" label="Options" valeur={e.options.length ? e.options.join(', ') : 'Aucune'} dernier={!peut('paiements')} />}
+          {!bloque && peut('paiements') && <Ligne icon="card" label="Montant" valeur={pesos(e.montant)} nombre />}
+          {!bloque && peut('paiements') && <Ligne icon="checkPlain" label="Déjà payé" valeur={pesos(e.paye)} nombre dernier
                             couleur={e.paye >= e.montant ? c.ok : c.warnInk} />}
           {bloque && <Ligne icon="info" label="Origine" valeur={`Importé du calendrier ${e.source}`} dernier />}
         </Section>

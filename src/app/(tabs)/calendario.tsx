@@ -1,4 +1,4 @@
-import { router } from 'expo-router'
+import { Redirect, router } from 'expo-router'
 import { useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import Svg, { Circle } from 'react-native-svg'
@@ -25,7 +25,13 @@ function dateCourte(jour: string) {
  * Le calendrier, présenté comme Google Agenda : le mois reste en haut, la
  * journée touchée s'affiche dessous, avec une loupe pour chercher par nom.
  */
+/** Le calendrier n'est ouvert qu'à ceux qui gèrent les réservations. */
 export default function Calendrier() {
+  const { peut } = useEtat()
+  return peut('reservations') ? <CalendrierOuvert /> : <Redirect href="/menu" />
+}
+
+function CalendrierOuvert() {
   const cal = useCal()
   const aujourdhui = date(AUJOURDHUI)
   const [mois, setMois] = useState({ annee: aujourdhui.getUTCFullYear(), mois: aujourdhui.getUTCMonth() })

@@ -24,7 +24,7 @@ const APERCU = 3
  */
 export default function Tablero() {
   const wa = useWa()
-  const { ouvrirAgent, config } = useEtat()
+  const { ouvrirAgent, config, membreVu, peut } = useEtat()
   const [question, setQuestion] = useState('')
   const [tout, setTout] = useState(false)
   const envoyer = () => { ouvrirAgent(question.trim() || undefined); setQuestion('') }
@@ -52,12 +52,12 @@ export default function Tablero() {
           </Pressable>
         </View>
 
-        <Text style={[s.salut, { color: wa.encre }]}>Bonjour {config.prenom || 'Hermine'},</Text>
+        <Text style={[s.salut, { color: wa.encre }]}>Bonjour {membreVu?.prenom ?? (config.prenom || 'Hermine')},</Text>
         <Text style={[s.resume, { color: wa.gris }]}>
           Aujourd’hui, <Gras>{pl(arrivees.length, 'arrivée')}</Gras> et <Gras>{pl(departs.length, 'départ')}</Gras>.
         </Text>
 
-        <View style={s.bloc}>
+        {(peut('arrivees') || peut('reservations')) && <View style={s.bloc}>
           <View style={s.ligneJauge}>
             <Text style={[s.etiquette, { color: wa.gris }]}>Ce soir</Text>
             <Text style={[s.etiquette, num, { color: wa.encre }]}>{occ}/{UNITES} occupées</Text>
@@ -65,9 +65,9 @@ export default function Tablero() {
           <View style={[s.jauge, { backgroundColor: wa.champ }]}>
             <View style={[s.jaugePlein, { width: `${(occ / UNITES) * 100}%`, backgroundColor: wa.vert }]} />
           </View>
-        </View>
+        </View>}
 
-        <View style={s.bloc}>
+        {peut('arrivees') && <View style={s.bloc}>
           <Text style={[s.titreSection, { color: wa.gris }]}>Votre journée</Text>
           {lignes.length === 0 && <Text style={[s.petit, { color: wa.gris }]}>Ni arrivée ni départ aujourd’hui.</Text>}
           {(tout ? lignes : lignes.slice(0, APERCU)).map((l) => (
@@ -79,7 +79,7 @@ export default function Tablero() {
                 <Text style={[s.creneauTitre, { color: wa.encre }]}>{l.quoi} · {l.s.nom}</Text>
                 <Text style={[s.petit, { color: wa.gris }]}>
                   {l.s.chambre} · {l.s.adultes + l.s.enfants} pers.
-                  {l.quoi === 'Arrivée' && l.s.montant > l.s.paye ? ` · reste ${pesos(l.s.montant - l.s.paye)}` : ''}
+                  {l.quoi === 'Arrivée' && peut('paiements') && l.s.montant > l.s.paye ? ` · reste ${pesos(l.s.montant - l.s.paye)}` : ''}
                 </Text>
               </View>
               <Icon name="chevR" size={16} color={wa.gris} />
@@ -94,9 +94,9 @@ export default function Tablero() {
               <Icon name="chevD" size={16} color={wa.vert} />
             </Pressable>
           )}
-        </View>
+        </View>}
 
-        {semaine.length > 0 && (
+        {peut('paiements') && semaine.length > 0 && (
           <Repere cle="aEncaisser">
             <View style={s.bloc}>
               <Text style={[s.titreSection, { color: wa.gris }]}>À encaisser cette semaine</Text>
@@ -113,7 +113,7 @@ export default function Tablero() {
           </Repere>
         )}
 
-        <LienStats />
+        {peut('paiements') && <LienStats />}
       </ScrollView>
     </SafeAreaView>
   )

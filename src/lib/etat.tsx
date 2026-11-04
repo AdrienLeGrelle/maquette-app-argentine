@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
 import { conversations as conversationsDemo, type Conversation } from '@/lib/demo'
-import { equipeDemo, type Membre } from '@/lib/equipe'
+import { equipeDemo, type Acces, type Membre } from '@/lib/equipe'
 
 /**
  * État de la maquette, en mémoire : pas de back pour l'instant. Un
@@ -105,6 +105,16 @@ type Etat = {
   equipe: Membre[]
   enregistrerMembre: (m: Membre) => void
   retirerMembre: (id: string) => void
+  /**
+   * Outil de démo : l'app vue par un employé (son id), ou par le gérant (null).
+   * N'existe que dans la maquette, pour montrer ce que chacun voit.
+   */
+  vue: string | null
+  setVue: (id: string | null) => void
+  /** L'employé dont on regarde l'app, s'il y en a un. */
+  membreVu?: Membre
+  /** Ce que la personne qui tient l'app a le droit de voir. Le gérant voit tout. */
+  peut: (a: Acces) => boolean
 }
 
 /** « Perso » : l'assistant ne répond jamais. Le choix manuel l'emporte sur la règle. */
@@ -147,11 +157,15 @@ export function EtatProvider({ children }: { children: ReactNode }) {
   const [agent, setAgent] = useState<{ ouvert: boolean; question?: string; n: number }>({ ouvert: false, n: 0 })
   const [ordreFiltres, setOrdreFiltres] = useState(['action', 'agent', 'toutes', 'perso'])
   const [equipe, setEquipe] = useState(equipeDemo)
+  const [vue, setVue] = useState<string | null>(null)
+  // Un employé retiré de l'équipe : on revient à la vue du gérant.
+  const membreVu = equipe.find((m) => m.id === vue)
 
   const valeur = useMemo<Etat>(() => ({
     langue, setLangue, tel, code, conecte, convs, categories, config, faites, bulleFermee, montrer, setMontrer, agentLance,
     lancerAgent: () => setAgentLance(true),
-    checkins, regleContacts, setRegleContacts, agent, ordreFiltres, setOrdreFiltres, equipe,
+    checkins, regleContacts, setRegleContacts, agent, ordreFiltres, setOrdreFiltres, equipe, vue, setVue, membreVu,
+    peut: (a) => !membreVu || membreVu.acces.includes(a),
     // Nouveau : ajouté au bout de la branche. Existant : modifié sur place.
     enregistrerMembre: (m) => setEquipe((es) => (es.some((e) => e.id === m.id) ? es.map((e) => (e.id === m.id ? m : e)) : [...es, m])),
     retirerMembre: (id) => setEquipe((es) => es.filter((e) => e.id !== id)),
@@ -189,7 +203,7 @@ export function EtatProvider({ children }: { children: ReactNode }) {
       setCategories((cats) => [...cats, { id, nom, ids }])
       return id
     },
-  }), [langue, tel, code, conecte, convs, categories, config, faites, bulleFermee, montrer, agentLance, checkins, regleContacts, agent, ordreFiltres, equipe])
+  }), [langue, tel, code, conecte, convs, categories, config, faites, bulleFermee, montrer, agentLance, checkins, regleContacts, agent, ordreFiltres, equipe, vue, membreVu])
 
   return <Ctx.Provider value={valeur}>{children}</Ctx.Provider>
 }

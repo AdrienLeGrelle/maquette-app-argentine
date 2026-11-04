@@ -16,7 +16,7 @@ export default function Chat() {
   const t = useT()
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
-  const { convs, lire, envoyer, agentLance, regleContacts, mettrePourMoi, reprendreMain } = useEtat()
+  const { convs, lire, envoyer, agentLance, regleContacts, mettrePourMoi, reprendreMain, membreVu } = useEtat()
   const [texte, setTexte] = useState('')
   const [ecriture, setEcriture] = useState(false)
   const defile = useRef<ComponentRef<typeof ScrollView>>(null)
@@ -26,7 +26,7 @@ export default function Chat() {
 
   useEffect(() => { if (id) lire(id) }, [id, lire])
 
-  if (!c) return <Redirect href="/" />
+  if (!c || (membreVu && estPourMoi(c, regleContacts))) return <Redirect href="/" />
 
   const moi = estPourMoi(c, regleContacts)
   const ecrit = !!c.ecrit && agentLance && !c.pause && !moi

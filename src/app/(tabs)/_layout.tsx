@@ -18,13 +18,14 @@ import { useWa } from '@/lib/theme'
 export default function OngletsLayout() {
   const t = useT()
   const pathname = usePathname()
-  const { conecte, convs, agentLance, bulleFermee, fermerBulle, agent, regleContacts } = useEtat()
+  const { conecte, convs, agentLance, bulleFermee, fermerBulle, agent, regleContacts, peut, membreVu } = useEtat()
   const [barre, setBarre] = useState({ largeur: 0, hauteur: 0 })
   // La pastille de Discussions ne compte que ce qui demande une réponse à la main :
   // « Action requise » une fois l'agent lancé, les non-lus avant (personne ne répond encore).
   const aRepondre = convs.filter((c) => !estPourMoi(c, regleContacts) && (agentLance ? c.colonne === 'action' : c.nonLus > 0))
   const nonLues = conecte ? aRepondre.length : 0
-  const aConfigurer = !agentLance
+  // La configuration regarde le gérant, pas ses employés.
+  const aConfigurer = !agentLance && !membreVu
   const bulle = aConfigurer && !bulleFermee && pathname !== '/ajustes' && barre.hauteur > 0
 
   return (
@@ -36,10 +37,10 @@ export default function OngletsLayout() {
             <Onglet icon="menu" label={t('Menú', 'Menu')} />
           </TabTrigger>
           <TabTrigger name="calendario" href="/calendario" asChild>
-            <Onglet icon="calendar" label={t('Calendario', 'Calendrier')} />
+            <Onglet icon="calendar" label={t('Calendario', 'Calendrier')} cache={!peut('reservations')} />
           </TabTrigger>
           <TabTrigger name="index" href="/" asChild>
-            <Onglet icon="chat" label={t('Chats', 'Discussions')} badge={nonLues} />
+            <Onglet icon="chat" label={t('Chats', 'Discussions')} badge={nonLues} cache={!peut('discussions')} />
           </TabTrigger>
           <TabTrigger name="ajustes" href="/ajustes" asChild>
             <Onglet icon="settings" label={t('Ajustes', 'Paramètres')} eclaire={aConfigurer} />
@@ -80,10 +81,12 @@ function Barre({ style, ...props }: ViewProps) {
   )
 }
 
-type OngletProps = TabTriggerSlotProps & { label: string; icon: IconName; badge?: number; eclaire?: boolean }
+type OngletProps = TabTriggerSlotProps & { label: string; icon: IconName; badge?: number; eclaire?: boolean; cache?: boolean }
 
-function Onglet({ label, icon, badge, eclaire, isFocused, ref, ...props }: OngletProps) {
+function Onglet({ label, icon, badge, eclaire, cache, isFocused, ref, ...props }: OngletProps) {
   const wa = useWa()
+  // Pas d'accès : l'onglet disparaît, la route reste déclarée.
+  if (cache) return null
   return (
     <Pressable {...props} ref={ref as unknown as Ref<ComponentRef<typeof Pressable>>} accessibilityRole="tab" accessibilityState={{ selected: isFocused }} style={s.onglet}>
       <View style={[s.pilule, (isFocused || eclaire) && { backgroundColor: wa.vertWash }]}>

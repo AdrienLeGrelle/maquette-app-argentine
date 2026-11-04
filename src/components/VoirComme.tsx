@@ -1,0 +1,69 @@
+import { router } from 'expo-router'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { nomRole } from '@/lib/equipe'
+import { useEtat } from '@/lib/etat'
+import { Avatar } from '@/lib/icons'
+import { useCouleurs, useWa } from '@/lib/theme'
+
+/**
+ * Outil de démo, hors du téléphone (ordinateur seulement) : toucher une
+ * personne de l'équipe montre l'app telle qu'elle la voit, avec ses accès.
+ * N'existe pas dans la vraie app.
+ */
+export function VoirComme() {
+  const c = useCouleurs()
+  const wa = useWa()
+  const { equipe, vue, setVue, config } = useEtat()
+
+  const choisir = (id: string | null) => {
+    setVue(id)
+    const m = equipe.find((x) => x.id === id)
+    // Chacun arrive sur son premier écran : les discussions s'il y a accès, sinon l'accueil.
+    router.replace(!m || m.acces.includes('discussions') ? '/' : '/menu')
+  }
+
+  const gerant = config.prenom || 'Gérant'
+  const personnes = [
+    { id: null, nom: gerant, role: 'Gérant', photo: undefined },
+    ...equipe.map((m) => ({ id: m.id, nom: m.prenom, role: nomRole(m.acces), photo: m.photo })),
+  ]
+
+  return (
+    <View style={s.barre}>
+      <Text style={[s.titre, { color: c.muted }]}>Démo · voir l’app comme</Text>
+      <View style={s.personnes}>
+        {personnes.map((p) => {
+          const actif = vue === p.id || (p.id === null && !equipe.some((m) => m.id === vue))
+          return (
+            <Pressable key={p.id ?? 'gerant'} onPress={() => choisir(p.id)} accessibilityRole="radio" accessibilityState={{ checked: actif }}
+                       style={({ pressed }) => [s.personne, { backgroundColor: actif ? c.accentWash : c.surface, borderColor: actif ? c.accent : c.line },
+                                                pressed && { opacity: 0.7 }]}>
+              {p.id === null ? (
+                <View style={[s.initiale, { backgroundColor: wa.vert }]}>
+                  <Text style={[s.initialeTexte, { color: wa.surVert }]}>{gerant.slice(0, 1).toUpperCase()}</Text>
+                </View>
+              ) : (
+                <Avatar size={28} photo={p.photo} fond={wa.avatar} icone={wa.avatarIcone} />
+              )}
+              <View>
+                <Text style={[s.nom, { color: actif ? c.onAccentWash : c.ink }]}>{p.nom}</Text>
+                <Text style={[s.role, { color: c.muted }]}>{p.role}</Text>
+              </View>
+            </Pressable>
+          )
+        })}
+      </View>
+    </View>
+  )
+}
+
+const s = StyleSheet.create({
+  barre: { alignItems: 'center', gap: 8, marginBottom: 14, maxWidth: 640 },
+  titre: { fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.4 },
+  personnes: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 },
+  personne: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 999, paddingLeft: 4, paddingRight: 14, paddingVertical: 4 },
+  initiale: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  initialeTexte: { fontSize: 13, fontWeight: '700' },
+  nom: { fontSize: 14, fontWeight: '600' },
+  role: { fontSize: 11 },
+})

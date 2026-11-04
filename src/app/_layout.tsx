@@ -2,6 +2,7 @@ import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { VoirComme } from '@/components/VoirComme'
 import { EtatProvider } from '@/lib/etat'
 import { useCouleurs } from '@/lib/theme'
 
@@ -41,6 +42,7 @@ function CadreOrdinateur({ children }: { children: React.ReactNode }) {
   if (Platform.OS !== 'web' || width < 600) return <>{children}</>
   return (
     <View style={[s.fond, { backgroundColor: c.surface3 }]}>
+      <VoirComme />
       <View style={[s.telephone, { backgroundColor: c.ground, borderColor: c.line }]}>
         {children}
         {/* Les fiches (nouvel employé, nouvelle catégorie) montent ici, dans le téléphone. */}

@@ -1,4 +1,4 @@
-import { router } from 'expo-router'
+import { Redirect, router } from 'expo-router'
 import { useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -20,10 +20,16 @@ type Filtre = string
  * Le premier écran : les conversations WhatsApp, comme dans WhatsApp. On
  * arrive sur « Action requise », la seule liste que l'hôtelier doit lire.
  */
+/** Les discussions ne sont ouvertes qu'à ceux qui répondent aux voyageurs. */
 export default function Discussions() {
+  const { peut } = useEtat()
+  return peut('discussions') ? <DiscussionsOuvertes /> : <Redirect href="/menu" />
+}
+
+function DiscussionsOuvertes() {
   const wa = useWa()
   const t = useT()
-  const { conecte, convs, categories, agentLance, regleContacts, mettrePourMoi, confierAgent, ordreFiltres, setOrdreFiltres } = useEtat()
+  const { conecte, convs, categories, agentLance, regleContacts, mettrePourMoi, confierAgent, ordreFiltres, setOrdreFiltres, membreVu } = useEtat()
   // Agent pas encore lancé : rien n'est trié, on ne montre que « Toutes ».
   const [filtre, setFiltre] = useState<Filtre>(agentLance ? 'action' : 'toutes')
   const verrouille = !agentLance && (filtre === 'action' || filtre === 'agent')
@@ -31,12 +37,14 @@ export default function Discussions() {
   const [creation, setCreation] = useState(false)
 
   const moi = (c: Conversation) => estPourMoi(c, regleContacts)
+  // Le Perso est au gérant : un employé ne le voit jamais.
+  const gerant = !membreVu
   const nAction = convs.filter((c) => !moi(c) && garde(c, 'action', categories)).length
   const q = recherche.trim().toLowerCase()
   // « Perso » sort de toutes les listes : on ne la voit qu'en l'ouvrant.
   const liste = convs.filter((c) => (filtre === 'perso' ? moi(c) : !moi(c) && garde(c, filtre, categories)) && (!q || c.nom.toLowerCase().includes(q)))
   // Les catégories créées s'ajoutent au bout, puis se déplacent comme les autres.
-  const cles = [...ordreFiltres, ...categories.map((c) => c.id).filter((id) => !ordreFiltres.includes(id))]
+  const cles = [...ordreFiltres, ...categories.map((c) => c.id).filter((id) => !ordreFiltres.includes(id))].filter((k) => gerant || k !== 'perso')
 
   const puce = (cle: string, p: PoigneeTri) => {
     const commun = { actif: filtre === cle, onPress: () => setFiltre(cle), poignee: p }
@@ -113,7 +121,7 @@ export default function Discussions() {
             ) : liste.map((c) => (
               <Glisser key={c.id} actions={[
                 { label: 'Agent', icon: 'sparkles', couleur: wa.vert, onPress: () => confierAgent(c.id) },
-                { label: 'Perso', icon: 'lock', couleur: wa.zoneMoi, onPress: () => mettrePourMoi(c.id, true) },
+                ...(gerant ? [{ label: 'Perso', icon: 'lock' as const, couleur: wa.zoneMoi, onPress: () => mettrePourMoi(c.id, true) }] : []),
               ]}>
                 <Ligne c={c} />
               </Glisser>

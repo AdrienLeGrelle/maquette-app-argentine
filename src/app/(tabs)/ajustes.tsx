@@ -6,7 +6,8 @@ import { LogoCanal } from '@/components/Logos'
 import { Repere } from '@/components/Repere'
 import { EcranOnglet } from '@/components/wa'
 import { ETAPES_COMPLETES, ETAPES_RAPIDES, useEtat, type Etape } from '@/lib/etat'
-import { Icon, type IconName } from '@/lib/icons'
+import { nomRole } from '@/lib/equipe'
+import { Avatar, Icon, type IconName } from '@/lib/icons'
 import { telLisible } from '@/lib/tel'
 import { num, useWa } from '@/lib/theme'
 
@@ -16,7 +17,9 @@ import { num, useWa } from '@/lib/theme'
  */
 export default function Ajustes() {
   const wa = useWa()
-  const { conecte, tel, recommencer, config, faites, agentLance, lancerAgent, regleContacts, setRegleContacts, equipe } = useEtat()
+  const { conecte, tel, recommencer, config, faites, agentLance, lancerAgent, regleContacts, setRegleContacts, equipe, membreVu, peut } = useEtat()
+  // Le gérant voit tout ; un employé, seulement les réglages qu'on lui a ouverts.
+  const gerant = !membreVu
   const fait = (e: Etape) => faites.includes(e)
   // Avant le lancement : le démarrage rapide. Après : ce qui reste de la configuration complète.
   const parcours = agentLance ? ETAPES_COMPLETES : ETAPES_RAPIDES
@@ -28,7 +31,7 @@ export default function Ajustes() {
   return (
     <EcranOnglet titre="Paramètres">
       <ScrollView contentContainerStyle={s.contenu}>
-        {!agentLance || reste.length > 0 ? (
+        {!peut('agent') ? null : !agentLance || reste.length > 0 ? (
           <View style={[s.banniere, { backgroundColor: wa.vertWash }]}>
             <Text style={[s.banniereTitre, { color: wa.vertEncre }]}>{agentLance ? 'Complétez la configuration' : 'Lancez votre agent'}</Text>
             <Text style={[s.banniereTexte, { color: wa.vertEncre }]}>
@@ -53,34 +56,46 @@ export default function Ajustes() {
         )}
 
         <View style={[s.profil, { backgroundColor: wa.champ }]}>
-          <View style={[s.avatar, { backgroundColor: wa.vert }]}>
-            <Text style={[s.avatarTexte, { color: wa.surVert }]}>{(config.prenom || '?').slice(0, 1).toUpperCase()}</Text>
-          </View>
+          {membreVu ? <Avatar size={60} photo={membreVu.photo} fond={wa.avatar} icone={wa.avatarIcone} /> : (
+            <View style={[s.avatar, { backgroundColor: wa.vert }]}>
+              <Text style={[s.avatarTexte, { color: wa.surVert }]}>{(config.prenom || '?').slice(0, 1).toUpperCase()}</Text>
+            </View>
+          )}
           <View style={s.flex}>
-            <Text style={[s.nom, { color: wa.encre }]}>{config.prenom || 'Vous'}</Text>
+            <Text style={[s.nom, { color: wa.encre }]}>{membreVu?.prenom ?? (config.prenom || 'Vous')}</Text>
             <Text style={[s.sous, { color: wa.gris }]}>
-              {config.hotel ? [config.hotel, config.ville].filter(Boolean).join(' · ') : 'Votre établissement'}
+              {membreVu
+                ? [nomRole(membreVu.acces), config.hotel].filter(Boolean).join(' · ')
+                : config.hotel ? [config.hotel, config.ville].filter(Boolean).join(' · ') : 'Votre établissement'}
             </Text>
           </View>
         </View>
 
-        <Section>
+        {membreVu && !peut('chambres') && !peut('agent') && (
+          <Text style={[s.sous, s.reserve, { color: wa.gris }]}>
+            Les réglages de l’établissement sont gérés par {config.prenom || 'le gérant'}.
+          </Text>
+        )}
+
+        {gerant && <Section>
           <Rangee cle="equipe" icon="users" titre="Équipe" onPress={() => router.push('/equipe')} dernier
                   apres={<Text style={[s.rangeeDetail, { color: wa.gris }]}>{equipe.length ? `${equipe.length} employé${equipe.length > 1 ? 's' : ''}` : 'Inviter'}</Text>} />
-        </Section>
+        </Section>}
 
-        <Section titre="Votre établissement">
+        {(gerant || peut('chambres')) && <Section titre="Votre établissement">
+          {gerant && <>
           <Rangee cle="vous" icon="user" titre="Vous" detail={config.prenom || undefined} fait={fait('vous')} onPress={() => ouvrir('vous')} />
           <Rangee cle="hotel" icon="building" titre="L’établissement" detail={config.hotel || undefined} fait={fait('hotel')} onPress={() => ouvrir('hotel')} />
           <Rangee cle="site" icon="globe" titre="Site, Booking, Google" detail={config.sansSite ? 'Rien en ligne' : config.analyse ? 'Analysés' : undefined} fait={fait('site')} onPress={() => ouvrir('site')} />
+          </>}
           <Rangee cle="chambres" icon="bed" titre="Chambres et prix"
                   detail={config.chambres.length ? `${config.chambres.length} type${config.chambres.length > 1 ? 's' : ''}` : undefined}
                   fait={fait('chambres')} onPress={() => ouvrir('chambres')} />
           <Rangee cle="regles" icon="clock" titre="Arrivées, départs, paiement" detail={fait('regles') ? `${config.arrivee} – ${config.depart}` : undefined}
                   fait={fait('regles')} onPress={() => ouvrir('regles')} dernier />
-        </Section>
+        </Section>}
 
-        <Section titre="Paiements et canaux">
+        {gerant && <Section titre="Paiements et canaux">
           <Rangee cle="whatsapp" icon="whatsapp" titre="WhatsApp" detail={conecte ? telLisible(tel) : 'Non connecté'} fait={conecte}
                   onPress={() => router.push('/conectar')} />
           <Rangee cle="mercadopago" icon="card" titre="Mercado Pago" detail={config.mercadoPago ? 'Compte lié' : undefined} fait={config.mercadoPago}
@@ -95,22 +110,22 @@ export default function Ajustes() {
                       <Text style={[s.suite, { color: wa.gris }]}>…</Text>
                     </View>
                   )} />
-        </Section>
+        </Section>}
 
-        <Section titre="Assistant">
+        {peut('agent') && <Section titre="Assistant">
           <Rangee cle="style" icon="edit" titre="Style d’écriture"
                   detail={!fait('style') ? undefined : config.style === 'toutes' ? 'Toutes les discussions' : config.style === 'aucune' ? 'Ton neutre' : `${config.styleIds.length} choisies`}
                   fait={fait('style')} onPress={() => ouvrir('style')} dernier />
-        </Section>
+        </Section>}
 
-        <Section titre="Zone « Perso »">
+        {gerant && <Section titre="Zone « Perso »">
           <View style={s.regle}>
             <Interrupteur label="Contacts enregistrés : pour moi" valeur={regleContacts} onChange={setRegleContacts}
                           sous="Banque, fournisseurs, équipe… L’assistant ne répond qu’aux numéros inconnus. Glissez une discussion à gauche pour changer au cas par cas." />
           </View>
-        </Section>
+        </Section>}
 
-        {conecte && (
+        {gerant && conecte && (
           <Section>
             <Rangee icon="logout" titre="Déconnecter WhatsApp (démo)" danger dernier
                     onPress={() => { recommencer(); router.navigate('/') }} />
@@ -180,5 +195,6 @@ const s = StyleSheet.create({
   rangeeCorps: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 50, paddingRight: 14 },
   rangeeTitre: { flex: 1, fontSize: 17 },
   rangeeDetail: { fontSize: 15, maxWidth: 140 },
+  reserve: { textAlign: 'center', marginHorizontal: 16 },
   aFaire: { fontSize: 15, fontWeight: '500' },
 })
