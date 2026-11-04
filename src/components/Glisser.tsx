@@ -25,10 +25,13 @@ export function Glisser({ children, actions }: { children: ReactNode; actions: A
       Animated.spring(x, { toValue: ouvrir ? -largeur : 0, useNativeDriver: natif, bounciness: 0 }).start()
     }
     return PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 12 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
+      // Fermée, la ligne ne prend que le geste vers la gauche : vers la droite, l'écran passe à l'onglet voisin.
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 12 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5 && (ouvert || g.dx < 0),
       onPanResponderMove: (_, g) => x.setValue(Math.max(-largeur - 20, Math.min(0, g.dx + (ouvert ? -largeur : 0)))),
       onPanResponderRelease: (_, g) => aller(g.dx + (ouvert ? -largeur : 0) < -largeur / 2),
       onPanResponderTerminate: () => aller(ouvert),
+      // Une fois la ligne prise, l'écran ne la lui reprend pas pour changer d'onglet.
+      onPanResponderTerminationRequest: () => false,
     })
   }, [x, largeur, ouvert])
 

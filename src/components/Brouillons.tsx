@@ -85,6 +85,8 @@ function Proposition({ texte, zone, onEnvoyer, onCorriger }: {
         reposer()
       },
       onPanResponderTerminate: () => { setPrise(false); reposer() },
+      // La bulle prise ne se laisse pas reprendre par le glisser entre onglets.
+      onPanResponderTerminationRequest: () => false,
     })
   }, [xy, echelle, opacite, zone, cadre, texte, onEnvoyer, onCorriger])
 

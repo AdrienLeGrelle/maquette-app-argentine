@@ -1,7 +1,7 @@
 import { router, usePathname } from 'expo-router'
 import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps } from 'expo-router/ui'
-import { useEffect, useState, type ComponentRef, type ReactNode, type Ref } from 'react'
-import { Animated, Easing, Pressable, StyleSheet, Text, View, type ViewProps } from 'react-native'
+import { useEffect, useMemo, useState, type ComponentRef, type ReactNode, type Ref } from 'react'
+import { Animated, Easing, PanResponder, Platform, Pressable, StyleSheet, Text, View, type ViewProps } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { AgentDemiEcran } from '@/components/Agent'
 import { IconeCanal, LogoCanal } from '@/components/Logos'
@@ -31,13 +31,51 @@ export default function OngletsLayout() {
   // L'éventail se déplie au-dessus de l'onglet Discussions, où qu'il soit dans la barre.
   const visibles = ['menu', peut('reservations') && 'calendario', peut('discussions') && 'index', 'ajustes'].filter(Boolean)
   const centre = (barre.largeur * (visibles.indexOf('index') + 0.5)) / visibles.length
+
+  // Glisser l'écran à gauche ou à droite passe à l'onglet voisin, dans l'ordre de la barre.
+  const [x] = useState(() => new Animated.Value(0))
+  const ordre = visibles.join(',')
+  const glisser = useMemo(() => {
+    const onglets = ordre.split(',')
+    const ici = onglets.indexOf(CLES[pathname] ?? '')
+    const voisin = (sens: number) => onglets[ici + sens]
+    const largeur = barre.largeur || 400
+    return PanResponder.create({
+      // Après les enfants : une ligne de discussion ou une puce qu'on glisse garde son geste.
+      onMoveShouldSetPanResponder: (_, g) => !eventail && ici >= 0 && Math.abs(g.dx) > 14 && Math.abs(g.dx) > Math.abs(g.dy) * 1.8,
+      onPanResponderMove: (_, g) => {
+        // Au bout de la barre, l'écran résiste au lieu de partir.
+        const libre = voisin(g.dx < 0 ? 1 : -1)
+        x.setValue(libre ? g.dx : g.dx / 4)
+      },
+      onPanResponderRelease: (_, g) => {
+        avalerClic()
+        const sens = g.dx < 0 ? 1 : -1
+        const cible = voisin(sens)
+        if (!cible || (Math.abs(g.dx) < largeur * 0.28 && Math.abs(g.vx) < 0.5)) {
+          Animated.spring(x, { toValue: 0, useNativeDriver: natif, bounciness: 0 }).start()
+          return
+        }
+        Animated.timing(x, { toValue: -sens * largeur, duration: 160, easing: Easing.in(Easing.quad), useNativeDriver: natif }).start(() => {
+          router.navigate(CHEMINS[cible])
+          x.setValue(sens * largeur)
+          Animated.timing(x, { toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: natif }).start()
+        })
+      },
+      onPanResponderTerminate: () => Animated.spring(x, { toValue: 0, useNativeDriver: natif, bounciness: 0 }).start(),
+    })
+  }, [x, ordre, pathname, barre.largeur, eventail])
   // La configuration regarde le gérant, pas ses employés.
   const aConfigurer = !agentLance && !membreVu
   const bulle = aConfigurer && !bulleFermee && pathname !== '/ajustes' && barre.hauteur > 0
 
   return (
     <Tabs style={s.flex}>
-      <TabSlot style={s.flex} />
+      <Animated.View style={[s.flex, s.coupe]} {...glisser.panHandlers}>
+        <Animated.View style={[s.flex, { transform: [{ translateX: x }] }]}>
+          <TabSlot style={s.flex} />
+        </Animated.View>
+      </Animated.View>
       <TabList asChild>
         <Barre onLayout={(e) => setBarre({ largeur: e.nativeEvent.layout.width, hauteur: e.nativeEvent.layout.height })}>
           <TabTrigger name="menu" href="/menu" asChild>
@@ -94,6 +132,23 @@ function Barre({ style, ...props }: ViewProps) {
           style={[style, s.barre, { backgroundColor: wa.barre, borderTopColor: wa.ligne, paddingBottom: Math.max(insets.bottom, 8) }]} />
   )
 }
+
+const natif = Platform.OS !== 'web'
+
+/**
+ * À la souris, relâcher un glissé envoie aussi un clic : il ouvrirait la
+ * discussion sous le pointeur. On l'avale. Au doigt, il n'y en a pas.
+ */
+function avalerClic() {
+  if (Platform.OS !== 'web') return
+  const stop = (e: Event) => { e.stopPropagation(); e.preventDefault() }
+  window.addEventListener('click', stop, { capture: true, once: true })
+  setTimeout(() => window.removeEventListener('click', stop, { capture: true }), 300)
+}
+
+/** Les onglets de la barre, par leur adresse, pour passer de l'un à l'autre en glissant. */
+const CLES: Record<string, string> = { '/menu': 'menu', '/calendario': 'calendario', '/': 'index', '/ajustes': 'ajustes' }
+const CHEMINS = { menu: '/menu', calendario: '/calendario', index: '/', ajustes: '/ajustes' } as Record<string, '/menu' | '/calendario' | '/' | '/ajustes'>
 
 /** Le diamètre d'une boîte dans l'éventail. */
 const TAILLE = 46
@@ -179,6 +234,7 @@ function Onglet({ label, icon, badge, eclaire, cache, dessin, onReappui, isFocus
 
 const s = StyleSheet.create({
   flex: { flex: 1 },
+  coupe: { overflow: 'hidden' },
   barre: { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 6, paddingHorizontal: 4 },
   onglet: { flex: 1, alignItems: 'center' },
   pilule: { alignItems: 'center', gap: 2, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 16, minWidth: 76 },
