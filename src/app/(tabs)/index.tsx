@@ -6,11 +6,12 @@ import { NouvelleCategorie } from '@/components/NouvelleCategorie'
 import { Points } from '@/components/Points'
 import { BoutonAgent } from '@/components/Agent'
 import { Glisser } from '@/components/Glisser'
+import { LogoCanal } from '@/components/Logos'
 import { Triables, type PoigneeTri } from '@/components/Triables'
 import { Repere } from '@/components/Repere'
 import { useTexteEtape } from '@/components/Paiement'
 import { pesos, type Conversation } from '@/lib/demo'
-import { estPourMoi, useEtat, useT, type Categorie } from '@/lib/etat'
+import { canalDe, estPourMoi, useEtat, useT, type Categorie } from '@/lib/etat'
 import { Avatar, Icon, type IconName } from '@/lib/icons'
 import { useWa } from '@/lib/theme'
 
@@ -30,7 +31,9 @@ export default function Discussions() {
 function DiscussionsOuvertes() {
   const wa = useWa()
   const t = useT()
-  const { conecte, convs, categories, agentLance, regleContacts, mettrePourMoi, confierAgent, ordreFiltres, setOrdreFiltres, membreVu } = useEtat()
+  const { conecte, convs: toutes, categories, agentLance, regleContacts, mettrePourMoi, confierAgent, ordreFiltres, setOrdreFiltres, membreVu, boite, boites } = useEtat()
+  // La boîte choisie dans la barre du bas : WhatsApp, Messenger, Instagram…
+  const convs = toutes.filter((c) => canalDe(c) === boite)
   // Agent pas encore lancé : rien n'est trié, on ne montre que « Toutes ».
   const [filtre, setFiltre] = useState<Filtre>(agentLance ? 'action' : 'toutes')
   const verrouille = !agentLance && (filtre === 'action' || filtre === 'agent')
@@ -78,7 +81,10 @@ function DiscussionsOuvertes() {
         </View>
 
         <View style={s.titreLigne}>
-          <Text accessibilityRole="header" style={[s.titre, { color: wa.encre }]}>{t('Chats', 'Discussions')}</Text>
+          <View style={s.titreBoite}>
+            {boites.length > 1 && <LogoCanal nom={boite} size={30} />}
+            <Text accessibilityRole="header" style={[s.titre, { color: wa.encre }]}>{t('Chats', 'Discussions')}</Text>
+          </View>
           <BoutonAgent />
         </View>
 
@@ -240,7 +246,8 @@ const s = StyleSheet.create({
   hautDroite: { flexDirection: 'row', gap: 12 },
   rond: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   titreLigne: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingRight: 14, marginTop: 10, marginBottom: 8 },
-  titre: { fontSize: 34, fontWeight: '700', letterSpacing: 0.3, paddingHorizontal: 16 },
+  titreBoite: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 16 },
+  titre: { fontSize: 34, fontWeight: '700', letterSpacing: 0.3 },
   champ: { flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: 16, borderRadius: 12, paddingHorizontal: 10, height: 38 },
   champTexte: { flex: 1, fontSize: 17, height: 38 },
   filtresZone: { overflow: 'visible', paddingVertical: 14 },

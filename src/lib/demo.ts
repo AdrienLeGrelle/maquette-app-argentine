@@ -74,6 +74,8 @@ export type Conversation = {
   pourMoi?: boolean
   /** L'hôtelier a repris la main : l'assistant ne répond plus sur ce fil. */
   pause?: boolean
+  /** Par où la personne écrit ; absent, c'est WhatsApp. `tel` porte alors son identifiant (@compte, e-mail). */
+  canal?: 'instagram' | 'messenger' | 'booking' | 'mail'
   quand: Quand
   messages: Message[]
 }
@@ -210,6 +212,53 @@ const brutes: Conversation[] = [
     messages: [{ de: 'huesped', heure: '10:00', texte: '¿Partido el sábado? Faltamos dos' }],
   },
 ]
+
+/**
+ * Les autres canaux : les gens du coin et les artisans écrivent souvent par
+ * Messenger, d'autres par Instagram ou par mail. Visibles une fois le canal
+ * branché dans Paramètres.
+ */
+brutes.push(
+  {
+    id: 'claudia', canal: 'messenger', photo: portrait('women/21'), nom: 'Claudia Ríos', tel: 'Messenger', colonne: 'action', nonLus: 1,
+    quand: { jour: 'hoy', heure: '13:02' },
+    messages: [{ de: 'huesped', heure: '13:02', texte: 'Hola! ¿Tienen lugar este finde para 2? Somos de Salta, llegaríamos el sábado temprano' }],
+  },
+  {
+    id: 'ramiro', canal: 'messenger', photo: portrait('men/71'), nom: 'Ramiro · Tejidos Andinos', tel: 'Messenger', colonne: 'other', nonLus: 1,
+    quand: { jour: 'hoy', heure: '10:40' },
+    messages: [{ de: 'huesped', heure: '10:40', texte: 'Buen día! ¿Te dejo los ponchos nuevos el jueves para la vitrina del hostal?' }],
+  },
+  {
+    id: 'sofia', canal: 'instagram', photo: portrait('women/65'), nom: 'Sofía', tel: '@sofi.viaja', colonne: 'action', nonLus: 2,
+    quand: { jour: 'hoy', heure: '12:55' },
+    messages: [
+      { de: 'huesped', heure: '12:54', texte: '¡Hola! Vi sus fotos de la cabaña 😍' },
+      { de: 'huesped', heure: '12:55', texte: '¿Cuánto sale para 4 la primera semana de enero?' },
+    ],
+  },
+  {
+    id: 'mochileros', canal: 'instagram', nom: 'Mochileros Argentina', tel: '@mochileros.arg', colonne: 'other', enCours: true, nonLus: 0,
+    quand: { jour: 'ayer', heure: '21:14' },
+    messages: [
+      { de: 'huesped', heure: '21:10', texte: '¿Hacen precio para grupos? Seríamos 6 en el dormitorio' },
+      { de: 'hotel', heure: '21:14', lu: true, texte: '¡Hola! Sí, para 6 en el dormitorio la noche sale $16.000 por persona en lugar de $18.000. ¿Qué fechas tienen pensadas?' },
+    ],
+  },
+  {
+    id: 'andestours', canal: 'mail', nom: 'Andes Tours', tel: 'reservas@andestours.com.ar', colonne: 'action', nonLus: 1,
+    quand: { jour: 'hoy', heure: '09:30' },
+    messages: [{ de: 'huesped', heure: '09:30', texte: 'Estimada Hermine: le solicitamos cotización para un grupo de 8 pasajeros, 3 noches del 12 al 15 de marzo, con desayuno. Saludos cordiales.' }],
+  },
+  {
+    id: 'thomas', canal: 'booking', nom: 'Thomas Müller', tel: 'Booking.com', colonne: 'other', enCours: true, nonLus: 0,
+    quand: { jour: 'hoy', heure: '08:05' },
+    messages: [
+      { de: 'huesped', heure: '08:01', texte: 'Hello! We arrive by bus around 11 pm, is late check-in ok?' },
+      { de: 'hotel', heure: '08:05', lu: true, texte: 'Hi Thomas! No problem, we leave the key at the reception box. The code will be sent the day before. See you soon!' },
+    ],
+  },
+)
 
 /** Les contacts de la zone Perso reçoivent leurs longs fils (src/lib/perso.ts). */
 export const conversations: Conversation[] = brutes.map((c) => (filsPerso[c.id] ? { ...c, messages: filsPerso[c.id] } : c))

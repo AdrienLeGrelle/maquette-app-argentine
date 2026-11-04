@@ -1,11 +1,12 @@
 import { router, usePathname } from 'expo-router'
 import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps } from 'expo-router/ui'
-import { useState, type ComponentRef, type Ref } from 'react'
-import { Pressable, StyleSheet, Text, View, type ViewProps } from 'react-native'
+import { useEffect, useState, type ComponentRef, type ReactNode, type Ref } from 'react'
+import { Animated, Easing, Pressable, StyleSheet, Text, View, type ViewProps } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { AgentDemiEcran } from '@/components/Agent'
+import { IconeCanal, LogoCanal } from '@/components/Logos'
 import { Halo } from '@/components/Repere'
-import { estPourMoi, useEtat, useT } from '@/lib/etat'
+import { canalDe, estPourMoi, useEtat, useT, type Boite } from '@/lib/etat'
 import { Icon, type IconName } from '@/lib/icons'
 import { useWa } from '@/lib/theme'
 
@@ -17,13 +18,19 @@ import { useWa } from '@/lib/theme'
  */
 export default function OngletsLayout() {
   const t = useT()
+  const wa = useWa()
   const pathname = usePathname()
-  const { conecte, convs, agentLance, bulleFermee, fermerBulle, agent, regleContacts, peut, membreVu } = useEtat()
+  const { conecte, convs, agentLance, bulleFermee, fermerBulle, agent, regleContacts, peut, membreVu, boites, boite, setBoite } = useEtat()
   const [barre, setBarre] = useState({ largeur: 0, hauteur: 0 })
+  const [eventail, setEventail] = useState(false)
   // La pastille de Discussions ne compte que ce qui demande une réponse à la main :
   // « Action requise » une fois l'agent lancé, les non-lus avant (personne ne répond encore).
-  const aRepondre = convs.filter((c) => !estPourMoi(c, regleContacts) && (agentLance ? c.colonne === 'action' : c.nonLus > 0))
+  const aRepondre = convs.filter((c) => boites.includes(canalDe(c)) && !estPourMoi(c, regleContacts) && (agentLance ? c.colonne === 'action' : c.nonLus > 0))
   const nonLues = conecte ? aRepondre.length : 0
+  const parBoite = (b: Boite) => aRepondre.filter((c) => canalDe(c) === b).length
+  // L'éventail se déplie au-dessus de l'onglet Discussions, où qu'il soit dans la barre.
+  const visibles = ['menu', peut('reservations') && 'calendario', peut('discussions') && 'index', 'ajustes'].filter(Boolean)
+  const centre = (barre.largeur * (visibles.indexOf('index') + 0.5)) / visibles.length
   // La configuration regarde le gérant, pas ses employés.
   const aConfigurer = !agentLance && !membreVu
   const bulle = aConfigurer && !bulleFermee && pathname !== '/ajustes' && barre.hauteur > 0
@@ -40,13 +47,20 @@ export default function OngletsLayout() {
             <Onglet icon="calendar" label={t('Calendario', 'Calendrier')} cache={!peut('reservations')} />
           </TabTrigger>
           <TabTrigger name="index" href="/" asChild>
-            <Onglet icon="chat" label={t('Chats', 'Discussions')} badge={nonLues} cache={!peut('discussions')} />
+            <Onglet icon="chat" label={t('Chats', 'Discussions')} badge={nonLues} cache={!peut('discussions')}
+                    dessin={(actif) => <IconeCanal canal={boite} color={wa.encre} actif={actif} />}
+                    // Un canal branché en plus de WhatsApp : retoucher l'onglet déplie les autres boîtes.
+                    onReappui={boites.length > 1 ? () => setEventail((o) => !o) : undefined} />
           </TabTrigger>
           <TabTrigger name="ajustes" href="/ajustes" asChild>
             <Onglet icon="settings" label={t('Ajustes', 'Paramètres')} eclaire={aConfigurer} />
           </TabTrigger>
         </Barre>
       </TabList>
+      {eventail && (
+        <Eventail boites={boites} boite={boite} centre={centre} bas={barre.hauteur} compte={parBoite}
+                  onChoisir={(b) => { setBoite(b); setEventail(false) }} onFermer={() => setEventail(false)} />
+      )}
       {bulle && !agent.ouvert && <BulleGuide largeur={barre.largeur} bas={barre.hauteur} onFermer={fermerBulle} />}
       <AgentDemiEcran />
     </Tabs>
@@ -81,17 +95,77 @@ function Barre({ style, ...props }: ViewProps) {
   )
 }
 
-type OngletProps = TabTriggerSlotProps & { label: string; icon: IconName; badge?: number; eclaire?: boolean; cache?: boolean }
+/** Le diamètre d'une boîte dans l'éventail. */
+const TAILLE = 52
 
-function Onglet({ label, icon, badge, eclaire, cache, isFocused, ref, ...props }: OngletProps) {
+const NOMS: Record<Boite, string> = { whatsapp: 'WhatsApp', messenger: 'Messenger', instagram: 'Instagram', mail: 'Mail', booking: 'Booking' }
+
+/**
+ * Les boîtes branchées, dépliées en colonne au-dessus de l'onglet : WhatsApp
+ * au plus près du doigt, puis les autres canaux. Chacune garde sa pastille.
+ */
+function Eventail({ boites, boite, centre, bas, compte, onChoisir, onFermer }: {
+  boites: Boite[]; boite: Boite; centre: number; bas: number; compte: (b: Boite) => number; onChoisir: (b: Boite) => void; onFermer: () => void
+}) {
+  const wa = useWa()
+  const [v] = useState(() => new Animated.Value(0))
+  useEffect(() => {
+    Animated.timing(v, { toValue: 1, duration: 220, easing: Easing.out(Easing.back(1.4)), useNativeDriver: false }).start()
+  }, [v])
+  return (
+    <>
+      <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: wa.voile, opacity: v.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' }) }]}>
+        <Pressable onPress={onFermer} accessibilityLabel="Fermer" style={s.flex} />
+      </Animated.View>
+      <View pointerEvents="box-none" style={[s.eventail, { bottom: bas + 6, left: centre - TAILLE / 2 }]}>
+        {boites.map((b, i) => {
+          const n = compte(b)
+          return (
+            <Animated.View key={b} style={{ opacity: v, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [(i + 1) * 18, 0] }) }] }}>
+              <Pressable onPress={() => onChoisir(b)} accessibilityRole="radio" accessibilityState={{ checked: b === boite }} accessibilityLabel={NOMS[b]}
+                         style={({ pressed }) => [s.boite, pressed && { opacity: 0.8 }]}>
+                <View style={[s.nomBoite, { backgroundColor: wa.fond, borderColor: wa.ligne }]}>
+                  <Text style={[s.nomBoiteTexte, { color: wa.encre, fontWeight: b === boite ? '700' : '500' }]}>{NOMS[b]}</Text>
+                </View>
+                <View style={[s.rondBoite, { backgroundColor: wa.fond, borderColor: b === boite ? wa.vert : wa.ligne }]}>
+                  <LogoCanal nom={b} size={34} />
+                  {n > 0 && (
+                    <View style={[s.badge, s.badgeBoite, { backgroundColor: wa.vert, borderColor: wa.fond }]}>
+                      <Text style={[s.badgeTexte, { color: wa.surVert }]}>{n}</Text>
+                    </View>
+                  )}
+                </View>
+              </Pressable>
+            </Animated.View>
+          )
+        }).reverse()}
+      </View>
+    </>
+  )
+}
+
+type OngletProps = TabTriggerSlotProps & {
+  label: string; icon: IconName; badge?: number; eclaire?: boolean; cache?: boolean
+  /** Remplace l'icône : le logo du canal affiché, pour Discussions. */
+  dessin?: (actif: boolean) => ReactNode
+  /** Toucher l'onglet déjà ouvert. */
+  onReappui?: () => void
+}
+
+function Onglet({ label, icon, badge, eclaire, cache, dessin, onReappui, isFocused, ref, ...props }: OngletProps) {
   const wa = useWa()
   // Pas d'accès : l'onglet disparaît, la route reste déclarée.
   if (cache) return null
+  // Sur le web l'onglet est un lien : sans preventDefault, retoucher l'onglet rechargerait la page.
   return (
-    <Pressable {...props} ref={ref as unknown as Ref<ComponentRef<typeof Pressable>>} accessibilityRole="tab" accessibilityState={{ selected: isFocused }} style={s.onglet}>
+    <Pressable {...props}
+               onPress={(e) => { if (isFocused && onReappui) { e.preventDefault(); onReappui() } else props.onPress?.(e) }}
+               onLongPress={(e) => { if (onReappui) { e.preventDefault(); onReappui() } else props.onLongPress?.(e) }}
+               ref={ref as unknown as Ref<ComponentRef<typeof Pressable>>} accessibilityRole="tab" accessibilityState={{ selected: isFocused }} style={s.onglet}>
       <View style={[s.pilule, (isFocused || eclaire) && { backgroundColor: wa.vertWash }]}>
         <View>
-          <Icon name={icon} size={26} color={eclaire && !isFocused ? wa.vert : wa.encre} plein={isFocused && icon === 'chat'} trait={isFocused ? 2.2 : 1.6} />
+          {dessin ? dessin(!!isFocused)
+            : <Icon name={icon} size={26} color={eclaire && !isFocused ? wa.vert : wa.encre} plein={isFocused && icon === 'chat'} trait={isFocused ? 2.2 : 1.6} />}
           {!!badge && (
             <View style={[s.badge, { backgroundColor: wa.vert, borderColor: wa.barre }]}>
               <Text style={[s.badgeTexte, { color: wa.surVert }]}>{badge}</Text>
@@ -123,4 +197,10 @@ const s = StyleSheet.create({
   bulleTitre: { fontSize: 16, fontWeight: '700' },
   bulleTexte: { fontSize: 14, lineHeight: 19, marginTop: 2 },
   fleche: { position: 'absolute', width: 14, height: 14, transform: [{ rotate: '45deg' }] },
+  eventail: { position: 'absolute', width: TAILLE, gap: 10, alignItems: 'center' },
+  boite: { flexDirection: 'row', alignItems: 'center' },
+  rondBoite: { width: TAILLE, height: TAILLE, borderRadius: TAILLE / 2, borderWidth: 2, alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(0,0,0,.16)' },
+  nomBoite: { position: 'absolute', right: TAILLE + 8, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 10, paddingVertical: 4, boxShadow: '0 2px 8px rgba(0,0,0,.12)' },
+  nomBoiteTexte: { fontSize: 13 },
+  badgeBoite: { top: -4, left: undefined, right: -6 },
 })

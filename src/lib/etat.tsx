@@ -21,6 +21,13 @@ export const ETAPES_COMPLETES: Etape[] = ['regles', 'mercadopago', 'style', 'can
 
 export type Chambre = { id: string; nom: string; stock: number; prix: string }
 export type Canal = 'instagram' | 'messenger' | 'booking' | 'mail'
+/** La boîte que montre l'onglet Discussions : WhatsApp ou un canal branché. */
+export type Boite = 'whatsapp' | Canal
+
+/** Le canal d'une discussion ; sans précision, WhatsApp. */
+export function canalDe(c: Conversation): Boite {
+  return c.canal ?? 'whatsapp'
+}
 
 /** La notification qui descend en haut du téléphone : un paiement reçu, un lien expiré. */
 export type Notif = { quoi: 'paye' | 'expire'; nom: string; montant: number; convId?: string; n: number }
@@ -129,6 +136,11 @@ type Etat = {
   expirer: (sejourId: string) => void
   notif: Notif | null
   fermerNotif: () => void
+  /** Les boîtes branchées, WhatsApp en premier. */
+  boites: Boite[]
+  /** La boîte affichée dans Discussions ; revient à WhatsApp si son canal est débranché. */
+  boite: Boite
+  setBoite: (b: Boite) => void
 }
 
 /** « Perso » : l'assistant ne répond jamais. Le choix manuel l'emporte sur la règle. */
@@ -183,12 +195,16 @@ export function EtatProvider({ children }: { children: ReactNode }) {
   const [vue, setVue] = useState<string | null>(null)
   const [sejours, setSejours] = useState(sejoursDemo)
   const [notif, setNotif] = useState<Notif | null>(null)
+  const [boiteChoisie, setBoite] = useState<Boite>('whatsapp')
+  const boites = useMemo<Boite[]>(() => ['whatsapp', ...(['messenger', 'instagram', 'mail', 'booking'] as Canal[]).filter((k) => config.canaux[k])], [config.canaux])
+  const boite = boites.includes(boiteChoisie) ? boiteChoisie : 'whatsapp'
   // Un employé retiré de l'équipe : on revient à la vue du gérant.
   const membreVu = equipe.find((m) => m.id === vue)
 
   const valeur = useMemo<Etat>(() => ({
     langue, setLangue, tel, code, conecte, convs, categories, config, faites, bulleFermee, montrer, setMontrer, agentLance, sejours, notif,
     fermerNotif: () => setNotif(null),
+    boites, boite, setBoite,
     envoyerLien: (convId) => {
       const d = devis[convId]
       const c = convs.find((x) => x.id === convId)
@@ -265,7 +281,7 @@ export function EtatProvider({ children }: { children: ReactNode }) {
       setCategories((cats) => [...cats, { id, nom, ids }])
       return id
     },
-  }), [langue, tel, code, conecte, convs, categories, config, faites, bulleFermee, montrer, agentLance, checkins, regleContacts, agent, ordreFiltres, equipe, vue, membreVu, sejours, notif])
+  }), [langue, tel, code, conecte, convs, categories, config, faites, bulleFermee, montrer, agentLance, checkins, regleContacts, agent, ordreFiltres, equipe, vue, membreVu, sejours, notif, boites, boite])
 
   return <Ctx.Provider value={valeur}>{children}</Ctx.Provider>
 }

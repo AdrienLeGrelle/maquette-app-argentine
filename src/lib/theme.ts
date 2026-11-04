@@ -98,6 +98,8 @@ const waClair = {
   lienBouton: '#027EB5',
   /** Le cadre de l'aperçu d'un lien, dans une bulle. */
   apercuLien: 'rgba(11,20,26,0.06)',
+  /** Le voile posé sur l'écran quand un menu flotte au-dessus (éventail des canaux). */
+  voile: 'rgba(11,20,26,0.18)',
   saisie: '#FFFFFF',
   pastille: '#FFFFFF',
 }
@@ -129,6 +131,7 @@ const waSombre: CouleursWa = {
   lu: '#53BDEB',
   lienBouton: '#53BDEB',
   apercuLien: 'rgba(255,255,255,0.07)',
+  voile: 'rgba(0,0,0,0.45)',
   saisie: '#1F2C34',
   pastille: '#1F2C34',
 }
@@ -163,6 +166,7 @@ export const revolut: CouleursWa = {
   lu: '#8EC5FF',
   lienBouton: '#8EC5FF',
   apercuLien: 'rgba(255,255,255,0.08)',
+  voile: 'rgba(0,0,0,0.45)',
   saisie: 'rgba(255,255,255,0.09)',
   pastille: 'rgba(255,255,255,0.09)',
 }
