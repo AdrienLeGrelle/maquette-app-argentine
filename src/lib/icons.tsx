@@ -1,3 +1,4 @@
+import { Image } from 'react-native'
 import Svg, { Circle, Path } from 'react-native-svg'
 
 /** Le jeu d'icônes de la maquette (apps/web/src/lib/icons.tsx), en trait. */
@@ -71,6 +72,13 @@ export function AvatarVide({ size, fond, icone }: { size: number; fond: string; 
       <Path d="M8.5 40.5C11 33.5 17 30 24 30s13 3.5 15.5 10.5A23.9 23.9 0 0 1 24 48a23.9 23.9 0 0 1-15.5-7.5Z" fill={icone} />
     </Svg>
   )
+}
+
+/** La photo de profil d'un contact, ou la silhouette grise s'il n'en a pas. */
+export function Avatar({ size, photo, fond, icone }: { size: number; photo?: string; fond: string; icone: string }) {
+  if (!photo) return <AvatarVide size={size} fond={fond} icone={icone} />
+  return <Image source={{ uri: photo }} accessibilityIgnoresInvertColors
+                style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: fond }} />
 }
 
 /** Le logo : une bulle de conversation qui abrite une maison (apps/web/public/icon.svg). */

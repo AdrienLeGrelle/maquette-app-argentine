@@ -19,6 +19,9 @@ export type Message = {
   lu?: boolean
 }
 
+/** Portraits de démonstration (randomuser.me), pour une liste qui ressemble à un vrai téléphone. */
+const portrait = (cle: string) => `https://randomuser.me/api/portraits/${cle}.jpg`
+
 export type Conversation = {
   id: string
   nom: string
@@ -30,6 +33,8 @@ export type Conversation = {
   ecrit?: boolean
   nonLus: number
   epingle?: boolean
+  /** Photo de profil WhatsApp ; absente, on montre la silhouette grise, comme chez WhatsApp. */
+  photo?: string
   /** Contact enregistré dans le téléphone (banque, fournisseur, équipe…). */
   enregistre?: boolean
   /** Choix manuel : true = « Pour moi », false = confié à l'assistant ; absent = la règle décide. */
@@ -42,7 +47,7 @@ export type Conversation = {
 
 export const conversations: Conversation[] = [
   {
-    id: 'torres', nom: 'Familia Torres', tel: '+54 9 387 512-4410', colonne: 'action', nonLus: 3, epingle: true,
+    id: 'torres', photo: portrait('women/44'), nom: 'Familia Torres', tel: '+54 9 387 512-4410', colonne: 'action', nonLus: 3, epingle: true,
     quand: { jour: 'hoy', heure: '13:24' },
     messages: [
       { de: 'huesped', heure: '13:20', texte: '¡Hola! Buenas tardes' },
@@ -51,17 +56,17 @@ export const conversations: Conversation[] = [
     ],
   },
   {
-    id: 'banco', nom: 'Carlos · Banco Macro', tel: '+54 9 388 422-9100', colonne: 'other', nonLus: 1, enregistre: true,
+    id: 'banco', photo: portrait('men/52'), nom: 'Carlos · Banco Macro', tel: '+54 9 388 422-9100', colonne: 'other', nonLus: 1, enregistre: true,
     quand: { jour: 'hoy', heure: '12:10' },
     messages: [{ de: 'huesped', heure: '12:10', texte: 'Buen día Hermine, te paso el resumen de la cuenta. ¿Podemos hablar a la tarde?' }],
   },
   {
-    id: 'verduras', nom: 'Don José verduras', tel: '+54 9 388 455-0193', colonne: 'other', nonLus: 0, enregistre: true,
+    id: 'verduras', photo: portrait('men/78'), nom: 'Don José verduras', tel: '+54 9 388 455-0193', colonne: 'other', nonLus: 0, enregistre: true,
     quand: { jour: 'ayer', heure: '18:02' },
     messages: [{ de: 'huesped', heure: '18:02', texte: 'Mañana te llevo los tomates y la lechuga 👍' }],
   },
   {
-    id: 'martin', nom: 'Martín Gómez', tel: '+54 9 11 4823-1190', colonne: 'action', nonLus: 2,
+    id: 'martin', photo: portrait('men/32'), nom: 'Martín Gómez', tel: '+54 9 11 4823-1190', colonne: 'action', nonLus: 2,
     quand: { jour: 'hoy', heure: '13:21' },
     messages: [
       { de: 'huesped', heure: '13:15', texte: '¡Hola! ¿Tienen lugar del 21 al 24 de noviembre? Somos 2' },
@@ -71,14 +76,14 @@ export const conversations: Conversation[] = [
     ],
   },
   {
-    id: 'nahuel', nom: 'Nahuel Quispe', tel: '+54 9 388 430-2271', colonne: 'other', enCours: true, ecrit: true, nonLus: 0,
+    id: 'nahuel', photo: portrait('men/11'), nom: 'Nahuel Quispe', tel: '+54 9 388 430-2271', colonne: 'other', enCours: true, ecrit: true, nonLus: 0,
     quand: { jour: 'hoy', heure: '13:25' },
     messages: [
       { de: 'huesped', heure: '13:25', texte: '¡Buenas! ¿A qué hora es el check-in? Llegamos en el bus de las 10 desde Jujuy' },
     ],
   },
   {
-    id: 'lucia', nom: 'Lucía Fernández', tel: '+54 9 381 566-0934', colonne: 'unpaid', enCours: true, nonLus: 0,
+    id: 'lucia', photo: portrait('women/68'), nom: 'Lucía Fernández', tel: '+54 9 381 566-0934', colonne: 'unpaid', enCours: true, nonLus: 0,
     quand: { jour: 'hoy', heure: '12:48' },
     messages: [
       { de: 'huesped', heure: '12:30', texte: '¡Buenas! Quería reservar la cabaña para 4 del 15 al 17 de diciembre' },
@@ -88,7 +93,7 @@ export const conversations: Conversation[] = [
     ],
   },
   {
-    id: 'silvia', nom: 'Silvia Ruiz', tel: '+54 9 351 702-4485', colonne: 'paid', nonLus: 0,
+    id: 'silvia', photo: portrait('women/26'), nom: 'Silvia Ruiz', tel: '+54 9 351 702-4485', colonne: 'paid', nonLus: 0,
     quand: { jour: 'hoy', heure: '11:05' },
     messages: [
       { de: 'huesped', heure: '10:58', texte: 'Listo, ya pagué 🙌' },
@@ -96,7 +101,7 @@ export const conversations: Conversation[] = [
     ],
   },
   {
-    id: 'ramon', nom: 'Ramón Díaz', tel: '+54 9 388 619-0072', colonne: 'unpaid', enCours: true, nonLus: 0,
+    id: 'ramon', photo: portrait('men/61'), nom: 'Ramón Díaz', tel: '+54 9 388 619-0072', colonne: 'unpaid', enCours: true, nonLus: 0,
     quand: { jour: 'ayer', heure: '19:30' },
     messages: [
       { de: 'huesped', heure: '19:22', texte: 'Hola, ¿puedo dejar una seña y el resto lo pago al llegar?' },
@@ -104,7 +109,7 @@ export const conversations: Conversation[] = [
     ],
   },
   {
-    id: 'agustina', nom: 'Agustina Vera', tel: '+54 9 11 3391-7720', colonne: 'other', nonLus: 0,
+    id: 'agustina', photo: portrait('women/12'), nom: 'Agustina Vera', tel: '+54 9 11 3391-7720', colonne: 'other', nonLus: 0,
     quand: { jour: 'ayer', heure: '10:12' },
     messages: [
       { de: 'hotel', heure: '09:50', lu: true, texte: '¡Gracias por elegirnos, Agustina! Que tengan buen viaje de vuelta.' },
@@ -112,7 +117,7 @@ export const conversations: Conversation[] = [
     ],
   },
   {
-    id: 'hilda', nom: 'Hilda Mamani', tel: '+54 9 388 245-8813', colonne: 'paid', nonLus: 0,
+    id: 'hilda', photo: portrait('women/79'), nom: 'Hilda Mamani', tel: '+54 9 388 245-8813', colonne: 'paid', nonLus: 0,
     quand: { jour: 'semaine', es: 'miércoles', fr: 'mercredi' },
     messages: [
       { de: 'huesped', heure: '16:02', texte: 'Perfecto, ahí te mandé el pago' },

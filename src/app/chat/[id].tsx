@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Points } from '@/components/Points'
 import type { Message } from '@/lib/demo'
 import { estPourMoi, useEtat, useT } from '@/lib/etat'
-import { AvatarVide, Icon } from '@/lib/icons'
+import { Avatar, Icon } from '@/lib/icons'
 import { useWa } from '@/lib/theme'
 
 /** Une conversation ouverte, dessinée comme dans WhatsApp. */
@@ -51,7 +51,7 @@ export default function Chat() {
           <Icon name="chevL" size={28} color={wa.encre} trait={2.2} />
           {autresNonLues > 0 && <Text style={[s.retourNombre, { color: wa.encre }]}>{autresNonLues}</Text>}
         </Pressable>
-        <AvatarVide size={36} fond={wa.avatar} icone={wa.avatarIcone} />
+        <Avatar size={36} photo={c.photo} fond={wa.avatar} icone={wa.avatarIcone} />
         <View style={s.flex}>
           <Text numberOfLines={1} style={[s.nom, { color: wa.encre }]}>{c.nom}</Text>
           <Text numberOfLines={1} style={[s.sous, { color: wa.gris }]}>{ecrit ? t('el asistente está escribiendo…', 'l’assistant écrit…') : c.tel}</Text>

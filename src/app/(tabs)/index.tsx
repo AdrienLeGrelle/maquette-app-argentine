@@ -9,7 +9,7 @@ import { Glisser } from '@/components/Glisser'
 import { Repere } from '@/components/Repere'
 import type { Conversation } from '@/lib/demo'
 import { estPourMoi, useEtat, useT, type Categorie } from '@/lib/etat'
-import { AvatarVide, Icon, type IconName } from '@/lib/icons'
+import { Avatar, Icon, type IconName } from '@/lib/icons'
 import { useWa } from '@/lib/theme'
 
 /** `action`, `encours`, `toutes`, ou l'id d'une catégorie créée par l'hôtelier. */
@@ -184,7 +184,7 @@ function Ligne({ c }: { c: Conversation }) {
   return (
     <Pressable onPress={() => router.push({ pathname: '/chat/[id]', params: { id: c.id } })}
                style={({ pressed }) => [s.ligne, pressed && { backgroundColor: wa.champ }]}>
-      <AvatarVide size={54} fond={wa.avatar} icone={wa.avatarIcone} />
+      <Avatar size={54} photo={c.photo} fond={wa.avatar} icone={wa.avatarIcone} />
       <View style={[s.corps, { borderBottomColor: wa.ligne }]}>
         <View style={s.rangee}>
           <Text numberOfLines={1} style={[s.nom, { color: wa.encre }]}>{c.nom}</Text>
