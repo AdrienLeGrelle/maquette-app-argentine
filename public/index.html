@@ -35,6 +35,11 @@
         -webkit-user-select: none;
         user-select: none;
       }
+      /* Les onglets du bas sont des liens : sans ça, la souris les « attrape » au lieu de faire défiler. */
+      a,
+      img {
+        -webkit-user-drag: none;
+      }
       input,
       textarea {
         -webkit-user-select: text;

@@ -1,7 +1,7 @@
 import { router, usePathname } from 'expo-router'
 import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps } from 'expo-router/ui'
 import { useEffect, useMemo, useState, type ComponentRef, type ReactNode, type Ref } from 'react'
-import { Animated, Easing, PanResponder, Platform, Pressable, StyleSheet, Text, View, type ViewProps } from 'react-native'
+import { Animated, Easing, PanResponder, Platform, Pressable, StyleSheet, Text, View, type PanResponderCallbacks, type ViewProps } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { AgentDemiEcran } from '@/components/Agent'
 import { IconeCanal, LogoCanal } from '@/components/Logos'
@@ -32,52 +32,86 @@ export default function OngletsLayout() {
   const visibles = ['menu', peut('reservations') && 'calendario', peut('discussions') && 'index', 'ajustes'].filter(Boolean)
   const centre = (barre.largeur * (visibles.indexOf('index') + 0.5)) / visibles.length
 
-  // Glisser l'écran à gauche ou à droite passe à l'onglet voisin, dans l'ordre de la barre.
-  const [x] = useState(() => new Animated.Value(0))
+  // Les onglets défilent comme des photos : posés côte à côte, ils suivent le doigt
+  // (sur l'écran comme sur la barre du bas) et se calent sur le plus proche.
+  const [pos] = useState(() => new Animated.Value(0))
+  const [pager] = useState(() => ({ depart: 0, vise: -1 }))
+  const [largeur, setLargeur] = useState(0)
   const ordre = visibles.join(',')
-  const glisser = useMemo(() => {
+  const ici = visibles.indexOf(CLES[pathname] ?? '')
+  // Une page par onglet, posées côte à côte ; les mêmes d'un rendu à l'autre pour ne pas couper l'animation.
+  const pages = useMemo(() => Object.fromEntries(ordre.split(',').map((o, i) => [o, [StyleSheet.absoluteFill, { transform: [{ translateX: Animated.add(pos, i * largeur) }] }]])), [pos, ordre, largeur])
+  // Un onglet touché dans la barre : l'écran défile jusqu'à lui. Après un glissé, il y est déjà.
+  useEffect(() => {
+    if (ici < 0 || !largeur) return
+    if (pager.vise === ici) { Object.assign(pager, { vise: -1 }); return }
+    Animated.spring(pos, { toValue: -ici * largeur, ...RESSORT, useNativeDriver: natif }).start()
+  }, [ici, largeur, pos, pager])
+  // Les onglets voisins sont chargés dès l'ouverture, pour être déjà là quand on glisse.
+  useEffect(() => {
+    for (const o of ordre.split(',')) router.prefetch(CHEMINS[o])
+  }, [ordre])
+  const { glisser, glisserBarre } = useMemo(() => {
     const onglets = ordre.split(',')
-    const ici = onglets.indexOf(CLES[pathname] ?? '')
-    const voisin = (sens: number) => onglets[ici + sens]
-    const largeur = barre.largeur || 400
-    return PanResponder.create({
+    const geste: PanResponderCallbacks = {
       // Après les enfants : une ligne de discussion ou une puce qu'on glisse garde son geste.
-      onMoveShouldSetPanResponder: (_, g) => !eventail && ici >= 0 && Math.abs(g.dx) > 14 && Math.abs(g.dx) > Math.abs(g.dy) * 1.8,
+      onMoveShouldSetPanResponder: (_, g) => !eventail && ici >= 0 && largeur > 0 && Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy) * 1.4,
+      onPanResponderGrant: () => pos.stopAnimation((v) => { Object.assign(pager, { depart: v }) }),
       onPanResponderMove: (_, g) => {
         // Au bout de la barre, l'écran résiste au lieu de partir.
-        const libre = voisin(g.dx < 0 ? 1 : -1)
-        x.setValue(libre ? g.dx : g.dx / 4)
+        const v = pager.depart + g.dx
+        const min = -(onglets.length - 1) * largeur
+        pos.setValue(v > 0 ? v / 4 : v < min ? min + (v - min) / 4 : v)
       },
       onPanResponderRelease: (_, g) => {
-        avalerClic()
-        const sens = g.dx < 0 ? 1 : -1
-        const cible = voisin(sens)
-        if (!cible || (Math.abs(g.dx) < largeur * 0.28 && Math.abs(g.vx) < 0.5)) {
-          Animated.spring(x, { toValue: 0, useNativeDriver: natif, bounciness: 0 }).start()
-          return
-        }
-        Animated.timing(x, { toValue: -sens * largeur, duration: 160, easing: Easing.in(Easing.quad), useNativeDriver: natif }).start(() => {
-          router.navigate(CHEMINS[cible])
-          x.setValue(sens * largeur)
-          Animated.timing(x, { toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: natif }).start()
-        })
+        // Un vrai glissé, pas un simple toucher : son clic de fin ne doit rien ouvrir.
+        if (Math.abs(g.dx) > 8) avalerClic()
+        // Assez loin, ou lancé assez vite : on passe à la page d'à côté, sinon on revient.
+        const page = -(pager.depart + g.dx) / largeur
+        const lance = Math.abs(g.vx) > 0.3 ? Math.sign(-g.vx) : Math.abs(g.dx) > largeur * 0.2 ? Math.sign(-g.dx) : 0
+        const cible = Math.max(0, Math.min(onglets.length - 1, lance ? (lance > 0 ? Math.floor(page) + 1 : Math.ceil(page) - 1) : Math.round(page)))
+        Object.assign(pager, { vise: cible })
+        Animated.spring(pos, { toValue: -cible * largeur, velocity: g.vx, ...RESSORT, useNativeDriver: natif }).start()
+        // L'onglet s'allume dans la barre dès qu'on lâche, pendant que la page finit d'arriver.
+        if (cible !== ici) router.navigate(CHEMINS[onglets[cible]])
+        else Object.assign(pager, { vise: -1 })
       },
-      onPanResponderTerminate: () => Animated.spring(x, { toValue: 0, useNativeDriver: natif, bounciness: 0 }).start(),
-    })
-  }, [x, ordre, pathname, barre.largeur, eventail])
+      onPanResponderTerminate: () => Animated.spring(pos, { toValue: -ici * largeur, ...RESSORT, useNativeDriver: natif }).start(),
+      // Une fois parti, le défilement garde la main jusqu'au bout (l'écran ne la reprend pas à la barre).
+      onPanResponderTerminationRequest: () => false,
+    }
+    return {
+      glisser: PanResponder.create(geste),
+      // Sur le web, la barre prend le geste dès qu'on la touche : un onglet touché
+      // s'ouvre quand même (par son clic), et un onglet glissé fait défiler.
+      glisserBarre: PanResponder.create({ ...geste, onStartShouldSetPanResponderCapture: () => Platform.OS === 'web' }),
+    }
+  }, [pos, pager, ordre, ici, largeur, eventail])
   // La configuration regarde le gérant, pas ses employés.
   const aConfigurer = !agentLance && !membreVu
   const bulle = aConfigurer && !bulleFermee && pathname !== '/ajustes' && barre.hauteur > 0
 
   return (
-    <Tabs style={s.flex}>
-      <Animated.View style={[s.flex, s.coupe]} {...glisser.panHandlers}>
-        <Animated.View style={[s.flex, { transform: [{ translateX: x }] }]}>
-          <TabSlot style={s.flex} />
-        </Animated.View>
-      </Animated.View>
+    // Le geste est posé sur tout l'onglet, écran et barre du bas compris.
+    <Tabs style={s.flex} {...glisser.panHandlers}>
+      <View style={[s.flex, s.coupe]}
+            onLayout={(e) => {
+              const w = e.nativeEvent.layout.width
+              if (w !== largeur) { pos.setValue(-Math.max(ici, 0) * w); setLargeur(w) }
+            }}>
+        <TabSlot style={s.flex} detachInactiveScreens={false} renderFn={(descriptor, { isFocused }) => {
+          const page = pages[descriptor.route.name]
+          // Un onglet caché à l'employé n'est pas posé à côté : sa redirection partirait toute seule.
+          if (!largeur || !page) return isFocused ? <View key={descriptor.route.key} style={StyleSheet.absoluteFill}>{descriptor.render()}</View> : null
+          return (
+            <Animated.View key={descriptor.route.key} style={page}>
+              {descriptor.render()}
+            </Animated.View>
+          )
+        }} />
+      </View>
       <TabList asChild>
-        <Barre onLayout={(e) => setBarre({ largeur: e.nativeEvent.layout.width, hauteur: e.nativeEvent.layout.height })}>
+        <Barre {...glisserBarre.panHandlers} onLayout={(e) => setBarre({ largeur: e.nativeEvent.layout.width, hauteur: e.nativeEvent.layout.height })}>
           <TabTrigger name="menu" href="/menu" asChild>
             <Onglet icon="menu" label={t('Menú', 'Menu')} />
           </TabTrigger>
@@ -134,6 +168,8 @@ function Barre({ style, ...props }: ViewProps) {
 }
 
 const natif = Platform.OS !== 'web'
+/** Le ressort du défilement : vif, sans rebond qui laisserait voir la page d'après. */
+const RESSORT = { stiffness: 260, damping: 32, mass: 1, overshootClamping: true }
 
 /**
  * À la souris, relâcher un glissé envoie aussi un clic : il ouvrirait la
