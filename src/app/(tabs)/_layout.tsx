@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { AgentDemiEcran } from '@/components/Agent'
 import { IconeCanal, LogoCanal } from '@/components/Logos'
 import { Halo } from '@/components/Repere'
+import { avalerClic } from '@/lib/geste'
 import { canalDe, estPourMoi, useEtat, useT, type Boite } from '@/lib/etat'
 import { Icon, type IconName } from '@/lib/icons'
 import { useWa } from '@/lib/theme'
@@ -170,17 +171,6 @@ function Barre({ style, ...props }: ViewProps) {
 const natif = Platform.OS !== 'web'
 /** Le ressort du défilement : vif, sans rebond qui laisserait voir la page d'après. */
 const RESSORT = { stiffness: 260, damping: 32, mass: 1, overshootClamping: true }
-
-/**
- * À la souris, relâcher un glissé envoie aussi un clic : il ouvrirait la
- * discussion sous le pointeur. On l'avale. Au doigt, il n'y en a pas.
- */
-function avalerClic() {
-  if (Platform.OS !== 'web') return
-  const stop = (e: Event) => { e.stopPropagation(); e.preventDefault() }
-  window.addEventListener('click', stop, { capture: true, once: true })
-  setTimeout(() => window.removeEventListener('click', stop, { capture: true }), 300)
-}
 
 /** Les onglets de la barre, par leur adresse, pour passer de l'un à l'autre en glissant. */
 const CLES: Record<string, string> = { '/menu': 'menu', '/calendario': 'calendario', '/': 'index', '/ajustes': 'ajustes' }

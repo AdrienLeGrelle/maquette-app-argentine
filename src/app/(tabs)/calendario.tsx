@@ -1,12 +1,13 @@
 import { Redirect, router } from 'expo-router'
-import { useState } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { useLayoutEffect, useMemo, useState } from 'react'
+import { Animated, Easing, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import Svg, { Circle } from 'react-native-svg'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Repere } from '@/components/Repere'
 import { AUJOURDHUI, INITIALES, JOURS_COURTS, MOIS, casesDuMois, date, ecart } from '@/lib/dates'
 import { UNITES, occupation, type Sejour } from '@/lib/demo'
 import { useEtat } from '@/lib/etat'
+import { avalerClic } from '@/lib/geste'
 import { Icon } from '@/lib/icons'
 import { num, useCal, type CouleursCal } from '@/lib/theme'
 
@@ -161,39 +162,104 @@ function Carte({ cal, e, detail }: { cal: CouleursCal; e: Sejour; detail: string
   )
 }
 
+/** Le mois d'avant ou d'après : (2026, 11) + 1 → (2027, 0). */
+function decaler(annee: number, mois: number, sens: number) {
+  const m = mois + sens
+  return { annee: annee + Math.floor(m / 12), mois: ((m % 12) + 12) % 12 }
+}
+
+const natif = Platform.OS !== 'web'
+
+/**
+ * Le mois en grille. On le fait glisser comme une photo : le mois d'avant et
+ * celui d'après attendent de chaque côté, la grille suit le doigt puis se
+ * cale. Les flèches font le même défilement.
+ */
 function GrilleMois({ cal, annee, mois, choisi, onChoisir, onMois }: {
   cal: CouleursCal; annee: number; mois: number; choisi: string; onChoisir: (j: string) => void; onMois: (sens: number) => void
+}) {
+  const [x] = useState(() => new Animated.Value(0))
+  const [largeur, setLargeur] = useState(0)
+  const avant = decaler(annee, mois, -1)
+  const apres = decaler(annee, mois, 1)
+
+  // Le nouveau mois est dessiné au centre : on y remet la grille avant que l'écran ne se peigne.
+  useLayoutEffect(() => { x.setValue(0) }, [x, annee, mois])
+
+  const aller = useMemo(() => (sens: number) => {
+    if (!largeur) { onMois(sens); return }
+    Animated.timing(x, { toValue: -sens * largeur, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: natif })
+      .start(({ finished }) => { if (finished) onMois(sens) })
+  }, [x, largeur, onMois])
+
+  const glisser = useMemo(() => PanResponder.create({
+    // Avant le défilement des onglets : sur la grille, glisser change de mois.
+    onMoveShouldSetPanResponder: (_, g) => largeur > 0 && Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy) * 1.2,
+    onPanResponderGrant: () => x.stopAnimation(),
+    onPanResponderMove: (_, g) => x.setValue(g.dx),
+    onPanResponderRelease: (_, g) => {
+      if (Math.abs(g.dx) > 8) avalerClic()
+      const sens = Math.abs(g.vx) > 0.3 ? Math.sign(-g.vx) : Math.abs(g.dx) > largeur * 0.2 ? Math.sign(-g.dx) : 0
+      if (sens) aller(sens)
+      else Animated.spring(x, { toValue: 0, useNativeDriver: natif, bounciness: 0 }).start()
+    },
+    onPanResponderTerminate: () => Animated.spring(x, { toValue: 0, useNativeDriver: natif, bounciness: 0 }).start(),
+    onPanResponderTerminationRequest: () => false,
+  }), [x, largeur, aller])
+
+  return (
+    <View style={s.grille}>
+      <View style={s.grilleEntete}>
+        <Pressable onPress={() => aller(-1)} hitSlop={10} accessibilityLabel="Mois précédent"><Icon name="chevL" size={20} color={cal.gris} /></Pressable>
+        <View style={s.initiales}>
+          {INITIALES.map((l, i) => <Text key={i} style={[s.initiale, { color: cal.gris }]}>{l}</Text>)}
+        </View>
+        <Pressable onPress={() => aller(1)} hitSlop={10} accessibilityLabel="Mois suivant"><Icon name="chevR" size={20} color={cal.gris} /></Pressable>
+      </View>
+      <View style={s.carrousel} onLayout={(e) => setLargeur(e.nativeEvent.layout.width)} {...glisser.panHandlers}>
+        <Animated.View style={{ transform: [{ translateX: x }] }}>
+          <CasesMois cal={cal} annee={annee} mois={mois} choisi={choisi} onChoisir={onChoisir} />
+          {largeur > 0 && (
+            <>
+              <View style={[s.voisin, { left: -largeur, width: largeur }]} pointerEvents="none">
+                <CasesMois cal={cal} annee={avant.annee} mois={avant.mois} choisi={choisi} onChoisir={onChoisir} />
+              </View>
+              <View style={[s.voisin, { left: largeur, width: largeur }]} pointerEvents="none">
+                <CasesMois cal={cal} annee={apres.annee} mois={apres.mois} choisi={choisi} onChoisir={onChoisir} />
+              </View>
+            </>
+          )}
+        </Animated.View>
+      </View>
+    </View>
+  )
+}
+
+/** Les jours d'un mois, chacun avec l'anneau de remplissage de sa nuit. */
+function CasesMois({ cal, annee, mois, choisi, onChoisir }: {
+  cal: CouleursCal; annee: number; mois: number; choisi: string; onChoisir: (j: string) => void
 }) {
   const { sejours } = useEtat()
   const cases = casesDuMois(annee, mois)
   return (
-    <View style={s.grille}>
-      <View style={s.grilleEntete}>
-        <Pressable onPress={() => onMois(-1)} hitSlop={10} accessibilityLabel="Mois précédent"><Icon name="chevL" size={20} color={cal.gris} /></Pressable>
-        <View style={s.initiales}>
-          {INITIALES.map((l, i) => <Text key={i} style={[s.initiale, { color: cal.gris }]}>{l}</Text>)}
-        </View>
-        <Pressable onPress={() => onMois(1)} hitSlop={10} accessibilityLabel="Mois suivant"><Icon name="chevR" size={20} color={cal.gris} /></Pressable>
-      </View>
-      <View style={s.cases}>
-        {cases.map((j, i) => {
-          if (!j) return <View key={i} style={s.case} />
-          const estAujourdhui = j === AUJOURDHUI
-          const estChoisi = j === choisi
-          const occ = occupation(j, sejours)
-          return (
-            <Pressable key={j} onPress={() => onChoisir(j)} style={s.case} accessibilityRole="button"
-                       accessibilityLabel={`${date(j).getUTCDate()} ${MOIS[mois]}, ${occ} sur ${UNITES} occupées`}>
-              <View style={[s.rondJour, estChoisi && !estAujourdhui && { backgroundColor: cal.choisi }]}>
-                <Anneau cal={cal} taux={occ / UNITES} />
-                <View style={[s.centreJour, estAujourdhui && { backgroundColor: cal.aujourdhui }]}>
-                  <Text style={[s.numJour, num, { color: estAujourdhui ? cal.surAujourdhui : cal.encre, fontWeight: estChoisi ? '700' : '400' }]}>{date(j).getUTCDate()}</Text>
-                </View>
+    <View style={s.cases}>
+      {cases.map((j, i) => {
+        if (!j) return <View key={i} style={s.case} />
+        const estAujourdhui = j === AUJOURDHUI
+        const estChoisi = j === choisi
+        const occ = occupation(j, sejours)
+        return (
+          <Pressable key={j} onPress={() => onChoisir(j)} style={s.case} accessibilityRole="button"
+                     accessibilityLabel={`${date(j).getUTCDate()} ${MOIS[mois]}, ${occ} sur ${UNITES} occupées`}>
+            <View style={[s.rondJour, estChoisi && !estAujourdhui && { backgroundColor: cal.choisi }]}>
+              <Anneau cal={cal} taux={occ / UNITES} />
+              <View style={[s.centreJour, estAujourdhui && { backgroundColor: cal.aujourdhui }]}>
+                <Text style={[s.numJour, num, { color: estAujourdhui ? cal.surAujourdhui : cal.encre, fontWeight: estChoisi ? '700' : '400' }]}>{date(j).getUTCDate()}</Text>
               </View>
-            </Pressable>
-          )
-        })}
-      </View>
+            </View>
+          </Pressable>
+        )
+      })}
     </View>
   )
 }
@@ -228,6 +294,8 @@ const s = StyleSheet.create({
   grilleEntete: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4 },
   initiales: { flex: 1, flexDirection: 'row' },
   initiale: { flex: 1, textAlign: 'center', fontSize: 12, fontWeight: '500' },
+  carrousel: { overflow: 'hidden' },
+  voisin: { position: 'absolute', top: 0 },
   cases: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 20 },
   case: { width: `${100 / 7}%`, alignItems: 'center', paddingVertical: 2, height: 44 },
   rondJour: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
