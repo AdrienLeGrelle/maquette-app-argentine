@@ -230,7 +230,7 @@ export const aides: Aide[] = [
   { mots: ['reserv', 'nouvelle', 'ajouter un client', 'booker'], route: '/', repere: 'nouvelleReservation', bouton: 'Me montrer',
     reponse: 'Pour créer une réservation vous-même, touchez le + vert en haut à droite des Discussions. Vous pouvez aussi le faire depuis le Calendrier, avec le + en bas à droite.' },
   { mots: ['categor', 'liste', 'filtre', 'ranger', 'trier'], route: '/', repere: 'categorie', bouton: 'Me montrer',
-    reponse: 'Touchez le + à droite des filtres (Action requise, Agent, Toutes, Perso). Pour les réordonner, appui long sur une puce puis glissez-la. Donnez un nom, cochez les discussions : c’est fait.' },
+    reponse: 'Touchez le + à droite des filtres (Action requise, Agent, Toutes, Perso). Pour les réordonner, faites glisser une puce à gauche ou à droite. Donnez un nom, cochez les discussions : c’est fait.' },
   { mots: ['dispo', 'libre', 'place', 'calendrier', 'planning', 'occup', 'agenda'], route: '/calendario', repere: 'moisCalendrier', bouton: 'Ouvrir le calendrier',
     reponse: 'Le Calendrier montre toutes les réservations, jour par jour. Touchez le nom du mois en haut pour voir le mois entier.' },
   { mots: ['prix', 'tarif', 'chambre', 'stock'], route: '/ajustes', repere: 'chambres', bouton: 'Me montrer',

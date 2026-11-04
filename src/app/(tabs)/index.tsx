@@ -29,7 +29,6 @@ export default function Discussions() {
   const verrouille = !agentLance && (filtre === 'action' || filtre === 'agent')
   const [recherche, setRecherche] = useState('')
   const [creation, setCreation] = useState(false)
-  const [tri, setTri] = useState(false)
 
   const moi = (c: Conversation) => estPourMoi(c, regleContacts)
   const nAction = convs.filter((c) => !moi(c) && garde(c, 'action', categories)).length
@@ -82,8 +81,7 @@ export default function Discussions() {
 
         {conecte ? (
           <>
-            <ScrollView horizontal scrollEnabled={!tri} showsHorizontalScrollIndicator={false} contentContainerStyle={s.filtres} style={s.filtresZone}>
-              <Triables cles={cles} gap={8} onOrdre={setOrdreFiltres} onGlisse={setTri} rendre={puce} />
+            <Triables cles={cles} gap={8} marge={16} style={s.filtresZone} onOrdre={setOrdreFiltres} rendre={puce} fin={
               <Repere cle="categorie" rayon={22}>
                 <Pressable onPress={() => setCreation(true)} accessibilityRole="button"
                            accessibilityLabel={t('Crear una categoría', 'Créer une catégorie')}
@@ -91,7 +89,7 @@ export default function Discussions() {
                   <Icon name="plus" size={18} color={wa.chipEncre} />
                 </Pressable>
               </Repere>
-            </ScrollView>
+            } />
 
             {filtre === 'perso' && (
               <Text style={[s.pourMoiNote, { color: wa.gris }]}>
@@ -160,8 +158,8 @@ function Chip({ label, actif, onPress, points, eteint, icon, poignee }: {
   const wa = useWa()
   const encre = actif && !eteint ? wa.vertEncre : wa.chipEncre
   return (
-    <Pressable onPress={onPress} onLongPress={poignee.onLongPress} onPressOut={poignee.onPressOut} delayLongPress={350}
-               accessibilityRole="button" accessibilityState={{ selected: actif }} accessibilityHint="Appui long pour déplacer"
+    <Pressable onPress={() => { onPress(); poignee.reveler() }}
+               accessibilityRole="button" accessibilityState={{ selected: actif }} accessibilityHint="Glisser à gauche ou à droite pour déplacer"
                style={[s.chip, actif && !eteint ? { backgroundColor: wa.vertWash, borderColor: wa.vertWash } : { borderColor: wa.chipBord, backgroundColor: wa.fond },
                        eteint && !poignee.glisse && { opacity: actif ? 0.7 : 0.4 }, poignee.glisse && { borderColor: wa.vert }]}>
       {icon && <Icon name={icon} size={14} color={encre} trait={2} />}
@@ -232,8 +230,7 @@ const s = StyleSheet.create({
   titre: { fontSize: 34, fontWeight: '700', letterSpacing: 0.3, paddingHorizontal: 16 },
   champ: { flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: 16, borderRadius: 12, paddingHorizontal: 10, height: 38 },
   champTexte: { flex: 1, fontSize: 17, height: 38 },
-  filtres: { gap: 8, paddingHorizontal: 16, paddingVertical: 14, alignItems: 'center' },
-  filtresZone: { overflow: 'visible' },
+  filtresZone: { overflow: 'visible', paddingVertical: 14 },
   chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, height: 32, flexDirection: 'row', alignItems: 'center', gap: 5 },
   chipPlus: { paddingHorizontal: 0, width: 32, justifyContent: 'center' },
   chipTexte: { fontSize: 15, fontWeight: '500' },
