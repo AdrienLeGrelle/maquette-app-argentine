@@ -214,7 +214,7 @@ const calClair = {
   /** Cartes de réservation : un lavis doux par statut, et son texte. */
   lavisConfirmee: '#EAF7EF',
   /** Le client est arrivé : le même vert, un cran plus soutenu. */
-  lavisArrive: '#C6EBD3',
+  lavisArrive: '#8FD4A9',
   lavisAttente: '#FDF4E6',
   lavisBloque: '#F3F4F5',
   texteConfirmee: '#0F6B3A',
@@ -244,7 +244,7 @@ const calSombre: CouleursCal = {
   bloque: '#80868B',
   surEvenement: '#FFFFFF',
   lavisConfirmee: '#14291E',
-  lavisArrive: '#1F4A31',
+  lavisArrive: '#2A6B45',
   lavisAttente: '#2D2416',
   lavisBloque: '#202124',
   texteConfirmee: '#8BE0AE',
