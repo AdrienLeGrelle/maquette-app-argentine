@@ -131,9 +131,10 @@ function Carte({ cal, e, detail }: { cal: CouleursCal; e: Sejour; detail: string
   const { checkins } = useEtat()
   const bloque = e.statut === 'bloque'
   const titre = bloque ? `Bloqué · ${e.chambre}` : e.nom
-  const statut = bloque ? e.source ?? 'Bloqué' : e.statut === 'attente' ? 'À payer' : checkins.includes(e.id) ? 'Arrivé' : 'Confirmée'
+  const arrive = checkins.includes(e.id)
+  const statut = bloque ? e.source ?? 'Bloqué' : e.statut === 'attente' ? 'À payer' : arrive ? 'Arrivé' : 'Confirmée'
   const sous = [bloque ? null : e.chambre, detail, bloque ? null : `${e.adultes + e.enfants} pers.`].filter(Boolean).join(' · ')
-  const t = teintes(cal, e)
+  const t = teintes(cal, e, arrive)
   return (
     <Pressable onPress={() => router.push({ pathname: '/reservation/[id]', params: { id: e.id } })} accessibilityRole="button"
                style={({ pressed }) => [s.carte, { backgroundColor: t.lavis, opacity: pressed ? 0.7 : 1 }]}>
@@ -203,8 +204,8 @@ function Anneau({ cal, taux }: { cal: CouleursCal; taux: number }) {
   )
 }
 
-function teintes(cal: CouleursCal, e: Sejour) {
-  if (e.statut === 'confirmee') return { trait: cal.confirmee, lavis: cal.lavisConfirmee, texte: cal.texteConfirmee }
+function teintes(cal: CouleursCal, e: Sejour, arrive: boolean) {
+  if (e.statut === 'confirmee') return { trait: cal.confirmee, lavis: arrive ? cal.lavisArrive : cal.lavisConfirmee, texte: cal.texteConfirmee }
   if (e.statut === 'attente') return { trait: cal.attente, lavis: cal.lavisAttente, texte: cal.texteAttente }
   return { trait: cal.bloque, lavis: cal.lavisBloque, texte: cal.texteBloque }
 }
