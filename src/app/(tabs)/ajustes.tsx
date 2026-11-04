@@ -16,7 +16,7 @@ import { num, useWa } from '@/lib/theme'
  */
 export default function Ajustes() {
   const wa = useWa()
-  const { conecte, tel, recommencer, config, faites, agentLance, lancerAgent, regleContacts, setRegleContacts } = useEtat()
+  const { conecte, tel, recommencer, config, faites, agentLance, lancerAgent, regleContacts, setRegleContacts, equipe } = useEtat()
   const fait = (e: Etape) => faites.includes(e)
   // Avant le lancement : le démarrage rapide. Après : ce qui reste de la configuration complète.
   const parcours = agentLance ? ETAPES_COMPLETES : ETAPES_RAPIDES
@@ -63,6 +63,11 @@ export default function Ajustes() {
             </Text>
           </View>
         </View>
+
+        <Section>
+          <Rangee cle="equipe" icon="users" titre="Équipe" onPress={() => router.push('/equipe')} dernier
+                  apres={<Text style={[s.rangeeDetail, { color: wa.gris }]}>{equipe.length ? `${equipe.length} employé${equipe.length > 1 ? 's' : ''}` : 'Inviter'}</Text>} />
+        </Section>
 
         <Section titre="Votre établissement">
           <Rangee cle="vous" icon="user" titre="Vous" detail={config.prenom || undefined} fait={fait('vous')} onPress={() => ouvrir('vous')} />

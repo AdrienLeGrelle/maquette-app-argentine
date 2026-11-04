@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
 import { conversations as conversationsDemo, type Conversation } from '@/lib/demo'
+import { equipeDemo, type Membre } from '@/lib/equipe'
 
 /**
  * État de la maquette, en mémoire : pas de back pour l'instant. Un
@@ -100,6 +101,10 @@ type Etat = {
   agent: { ouvert: boolean; question?: string; n: number }
   ouvrirAgent: (question?: string) => void
   fermerAgent: () => void
+  /** Les employés invités par le gérant. */
+  equipe: Membre[]
+  enregistrerMembre: (m: Membre) => void
+  retirerMembre: (id: string) => void
 }
 
 /** « Perso » : l'assistant ne répond jamais. Le choix manuel l'emporte sur la règle. */
@@ -141,11 +146,15 @@ export function EtatProvider({ children }: { children: ReactNode }) {
   const [regleContacts, setRegleContacts] = useState(true)
   const [agent, setAgent] = useState<{ ouvert: boolean; question?: string; n: number }>({ ouvert: false, n: 0 })
   const [ordreFiltres, setOrdreFiltres] = useState(['action', 'agent', 'toutes', 'perso'])
+  const [equipe, setEquipe] = useState(equipeDemo)
 
   const valeur = useMemo<Etat>(() => ({
     langue, setLangue, tel, code, conecte, convs, categories, config, faites, bulleFermee, montrer, setMontrer, agentLance,
     lancerAgent: () => setAgentLance(true),
-    checkins, regleContacts, setRegleContacts, agent, ordreFiltres, setOrdreFiltres,
+    checkins, regleContacts, setRegleContacts, agent, ordreFiltres, setOrdreFiltres, equipe,
+    // Nouveau : ajouté au bout de la branche. Existant : modifié sur place.
+    enregistrerMembre: (m) => setEquipe((es) => (es.some((e) => e.id === m.id) ? es.map((e) => (e.id === m.id ? m : e)) : [...es, m])),
+    retirerMembre: (id) => setEquipe((es) => es.filter((e) => e.id !== id)),
     confierAgent: (id) => setConvs((cs) => cs.map((c) => (c.id === id ? { ...c, pourMoi: false, pause: false, enCours: true } : c))),
     ouvrirAgent: (question) => setAgent((a) => ({ ouvert: true, question, n: a.n + 1 })),
     fermerAgent: () => setAgent((a) => ({ ...a, ouvert: false, question: undefined })),
@@ -180,7 +189,7 @@ export function EtatProvider({ children }: { children: ReactNode }) {
       setCategories((cats) => [...cats, { id, nom, ids }])
       return id
     },
-  }), [langue, tel, code, conecte, convs, categories, config, faites, bulleFermee, montrer, agentLance, checkins, regleContacts, agent, ordreFiltres])
+  }), [langue, tel, code, conecte, convs, categories, config, faites, bulleFermee, montrer, agentLance, checkins, regleContacts, agent, ordreFiltres, equipe])
 
   return <Ctx.Provider value={valeur}>{children}</Ctx.Provider>
 }
