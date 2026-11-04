@@ -123,8 +123,9 @@ function moment(e: Sejour, jour: string) {
 }
 
 /**
- * Une réservation de la journée : carte neutre, texte foncé, le statut en
- * petite pastille. Une seule couleur par carte, celle du statut, et discrète.
+ * Une réservation de la journée : la carte prend un lavis doux de la couleur
+ * de son statut, avec un liseret à gauche et le statut en pilule. Vert de
+ * l'app pour confirmée, ambre pour à payer, gris pour un blocage importé.
  */
 function Carte({ cal, e, detail }: { cal: CouleursCal; e: Sejour; detail: string }) {
   const { checkins } = useEtat()
@@ -132,20 +133,22 @@ function Carte({ cal, e, detail }: { cal: CouleursCal; e: Sejour; detail: string
   const titre = bloque ? `Bloqué · ${e.chambre}` : e.nom
   const statut = bloque ? e.source ?? 'Bloqué' : e.statut === 'attente' ? 'À payer' : checkins.includes(e.id) ? 'Arrivé' : 'Confirmée'
   const sous = [bloque ? null : e.chambre, detail, bloque ? null : `${e.adultes + e.enfants} pers.`].filter(Boolean).join(' · ')
+  const t = teintes(cal, e)
   return (
     <Pressable onPress={() => router.push({ pathname: '/reservation/[id]', params: { id: e.id } })} accessibilityRole="button"
-               style={({ pressed }) => [s.carte, { backgroundColor: pressed ? cal.choisi : cal.fond, borderColor: cal.ligne }]}>
+               style={({ pressed }) => [s.carte, { backgroundColor: t.lavis, opacity: pressed ? 0.7 : 1 }]}>
+      <View style={[s.liseret, { backgroundColor: t.trait }]} />
       <View style={s.flex}>
         <View style={s.carteHaut}>
           <Text numberOfLines={1} style={[s.carteTitre, { color: bloque ? cal.gris : cal.encre }]}>{titre}</Text>
-          <View style={s.statut}>
-            <View style={[s.pastille, { backgroundColor: couleur(cal, e) }]} />
-            <Text style={[s.statutTexte, { color: cal.gris }]}>{statut}</Text>
+          <View style={[s.statut, { backgroundColor: cal.fond }]}>
+            <View style={[s.pastille, { backgroundColor: t.trait }]} />
+            <Text style={[s.statutTexte, { color: t.texte }]}>{statut}</Text>
           </View>
         </View>
         <Text numberOfLines={1} style={[s.carteDetail, { color: cal.gris }]}>{sous}</Text>
       </View>
-      <Icon name="chevR" size={16} color={cal.gris} />
+      <Icon name="chevR" size={16} color={t.texte} />
     </Pressable>
   )
 }
@@ -200,8 +203,10 @@ function Anneau({ cal, taux }: { cal: CouleursCal; taux: number }) {
   )
 }
 
-function couleur(cal: CouleursCal, e: Sejour) {
-  return e.statut === 'confirmee' ? cal.confirmee : e.statut === 'attente' ? cal.attente : cal.bloque
+function teintes(cal: CouleursCal, e: Sejour) {
+  if (e.statut === 'confirmee') return { trait: cal.confirmee, lavis: cal.lavisConfirmee, texte: cal.texteConfirmee }
+  if (e.statut === 'attente') return { trait: cal.attente, lavis: cal.lavisAttente, texte: cal.texteAttente }
+  return { trait: cal.bloque, lavis: cal.lavisBloque, texte: cal.texteBloque }
 }
 
 const s = StyleSheet.create({
@@ -228,11 +233,12 @@ const s = StyleSheet.create({
   rechercheChamp: { flex: 1, fontSize: 16, height: 36 },
   liste: { paddingHorizontal: 16, gap: 8, paddingTop: 2 },
   rien: { fontSize: 15, paddingTop: 16, textAlign: 'center' },
-  carte: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 14, paddingVertical: 12 },
+  carte: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 14, paddingLeft: 18, paddingRight: 14, paddingVertical: 12, overflow: 'hidden' },
+  liseret: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4 },
   carteHaut: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   carteTitre: { flex: 1, fontSize: 16, fontWeight: '600' },
   carteDetail: { fontSize: 13, marginTop: 3 },
-  statut: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  statut: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
   pastille: { width: 8, height: 8, borderRadius: 4 },
   statutTexte: { fontSize: 12, fontWeight: '500' },
   basDePage: { height: 90 },
