@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Feuille } from '@/components/Feuille'
 import { Interrupteur } from '@/components/Formulaire'
 import { ACCES, MODELES, nomRole, type Acces, type Membre } from '@/lib/equipe'
 import { useEtat } from '@/lib/etat'
@@ -34,7 +35,7 @@ export function FicheMembre({ membre, visible, onClose }: { membre?: Membre; vis
   }
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <Feuille visible={visible} onClose={onClose}>
       <View style={[s.flex, { backgroundColor: wa.fond, paddingBottom: insets.bottom }]}>
         <View style={[s.entete, { borderBottomColor: wa.ligne }]}>
           <Pressable onPress={onClose} hitSlop={12}><Text style={[s.action, { color: wa.encre }]}>Annuler</Text></Pressable>
@@ -128,7 +129,7 @@ export function FicheMembre({ membre, visible, onClose }: { membre?: Membre; vis
           )}
         </ScrollView>
       </View>
-    </Modal>
+    </Feuille>
   )
 }
 

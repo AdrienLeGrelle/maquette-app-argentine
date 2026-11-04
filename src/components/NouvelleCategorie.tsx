@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Feuille } from '@/components/Feuille'
 import { useEtat, useT } from '@/lib/etat'
 import { AvatarVide, Icon } from '@/lib/icons'
 import { useWa } from '@/lib/theme'
@@ -22,7 +23,7 @@ export function NouvelleCategorie({ visible, onClose }: { visible: boolean; onCl
   const basculer = (id: string) => setChoisis((cs) => (cs.includes(id) ? cs.filter((x) => x !== id) : [...cs, id]))
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => fermer()} transparent={false}>
+    <Feuille visible={visible} onClose={() => fermer()}>
       <View style={[s.flex, { backgroundColor: wa.fond, paddingBottom: insets.bottom }]}>
         <View style={[s.entete, { borderBottomColor: wa.ligne }]}>
           <Pressable onPress={() => fermer()} hitSlop={12}><Text style={[s.action, { color: wa.encre }]}>{t('Cancelar', 'Annuler')}</Text></Pressable>
@@ -58,7 +59,7 @@ export function NouvelleCategorie({ visible, onClose }: { visible: boolean; onCl
           </View>
         </ScrollView>
       </View>
-    </Modal>
+    </Feuille>
   )
 }
 

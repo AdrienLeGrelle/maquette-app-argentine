@@ -41,7 +41,11 @@ function CadreOrdinateur({ children }: { children: React.ReactNode }) {
   if (Platform.OS !== 'web' || width < 600) return <>{children}</>
   return (
     <View style={[s.fond, { backgroundColor: c.surface3 }]}>
-      <View style={[s.telephone, { backgroundColor: c.ground, borderColor: c.line }]}>{children}</View>
+      <View style={[s.telephone, { backgroundColor: c.ground, borderColor: c.line }]}>
+        {children}
+        {/* Les fiches (nouvel employé, nouvelle catégorie) montent ici, dans le téléphone. */}
+        <View nativeID="cadre-feuilles" pointerEvents="box-none" style={StyleSheet.absoluteFill} />
+      </View>
     </View>
   )
 }
