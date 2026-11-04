@@ -11,7 +11,7 @@ import { LogoCanal } from '@/components/Logos'
 import { Triables, type PoigneeTri } from '@/components/Triables'
 import { Repere } from '@/components/Repere'
 import { useTexteEtape } from '@/components/Paiement'
-import { pesos, type Conversation } from '@/lib/demo'
+import { cleQuand, pesos, type Conversation } from '@/lib/demo'
 import { canalDe, estPourMoi, useEtat, useT, type Categorie } from '@/lib/etat'
 import { Avatar, Icon, type IconName } from '@/lib/icons'
 import { useWa } from '@/lib/theme'
@@ -50,6 +50,8 @@ function DiscussionsOuvertes() {
   const q = recherche.trim().toLowerCase()
   // « Perso » sort de toutes les listes : on ne la voit qu'en l'ouvrant.
   const liste = convs.filter((c) => (filtre === 'perso' ? moi(c) : !moi(c) && garde(c, filtre, categories)) && (!q || c.nom.toLowerCase().includes(q)))
+    // Épinglées en haut, puis du plus récent au plus ancien : un fil auquel on répond remonte.
+    .sort((a, b) => Number(!!b.epingle) - Number(!!a.epingle) || cleQuand(b.quand).localeCompare(cleQuand(a.quand)))
   // Les catégories créées s'ajoutent au bout, puis se déplacent comme les autres.
   const cles = [...ordreFiltres, ...categories.map((c) => c.id).filter((id) => !ordreFiltres.includes(id))].filter((k) => gerant || k !== 'perso')
 

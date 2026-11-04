@@ -326,6 +326,282 @@ brutes.push(
   },
 )
 
+/**
+ * Encore des fils, pour que chaque boîte ressemble à un vrai téléphone
+ * d'hôtelier : voyageurs d'ici et d'ailleurs, groupes, fournisseurs, proches.
+ */
+brutes.push(
+  // ── WhatsApp ──
+  {
+    id: 'gutierrez', photo: portrait('women/17'), nom: 'Familia Gutiérrez', tel: '+54 9 381 455-2091', colonne: 'action', nonLus: 4,
+    quand: { jour: 'hoy', heure: '13:05' },
+    messages: [
+      { de: 'huesped', heure: '13:03', texte: '¡Hola!!' },
+      { de: 'huesped', heure: '13:04', texte: 'Somos 5, 2 adultos y 3 chicos' },
+      { de: 'huesped', heure: '13:05', texte: '¿Tienen algo para Semana Santa? Del 2 al 5 de abril' },
+    ],
+  },
+  {
+    id: 'valeria', photo: portrait('women/36'), nom: 'Valeria Sosa', tel: '+54 9 381 612-7740', colonne: 'action', nonLus: 2,
+    quand: { jour: 'hoy', heure: '12:52' },
+    messages: [
+      { de: 'huesped', heure: '12:51', texte: 'Hola! ¿Tienen cochera?' },
+      { de: 'huesped', heure: '12:52', texte: 'Vamos en auto desde Tucumán, 2 noches desde el viernes 6' },
+    ],
+  },
+  {
+    id: 'docente', photo: portrait('men/48'), nom: 'Prof. Daniel Ruiz', tel: '+54 9 387 501-3318', colonne: 'action', nonLus: 1,
+    quand: { jour: 'hoy', heure: '12:40' },
+    messages: [{ de: 'huesped', heure: '12:40', texte: 'Buenas tardes, soy docente de una escuela de Salta. Hacemos viaje de estudio: 18 alumnos y 2 docentes. ¿Hacen precio por grupo en el dormitorio?' }],
+  },
+  {
+    id: 'camitomas', photo: portrait('women/47'), nom: 'Camila y Tomás', tel: '+54 9 11 6230-4417', colonne: 'unpaid', enCours: true, nonLus: 0,
+    quand: { jour: 'hoy', heure: '11:50' },
+    messages: [
+      { de: 'huesped', heure: '11:41', texte: 'Nos quedamos con la doble del 13 al 15 🙌' },
+      { de: 'hotel', heure: '11:42', lu: true, texte: '¡Genial! Son 2 noches, $136.000 con desayuno. Para confirmarla te pido una seña del 30 %: $40.800.' },
+      { de: 'huesped', heure: '11:48', texte: 'Dale, ¿cómo pago?' },
+      { de: 'hotel', heure: '11:50', lu: true, texte: 'Te mando el link de Mercado Pago en un ratito, apenas lo pagues queda confirmada 😊' },
+    ],
+  },
+  {
+    id: 'jorge', photo: portrait('men/58'), nom: 'Jorge Méndez', tel: '+54 9 351 418-9902', colonne: 'paid', nonLus: 0,
+    quand: { jour: 'hoy', heure: '10:20' },
+    messages: [
+      { de: 'huesped', heure: '10:12', texte: 'Ahí te mandé el pago' },
+      { de: 'hotel', heure: '10:20', lu: true, texte: '¡Recibido, Jorge! Reserva confirmada: cabaña para 4 del 7 al 9 de noviembre. ¡Los esperamos!' },
+    ],
+  },
+  {
+    id: 'quispe', photo: portrait('women/83'), nom: 'Rosa Quispe', tel: '+54 9 388 470-1182', colonne: 'other', enCours: true, nonLus: 0,
+    quand: { jour: 'hoy', heure: '09:40' },
+    messages: [
+      { de: 'huesped', heure: '09:31', vocal: '0:34' },
+      { de: 'huesped', heure: '09:32', texte: '¿A qué hora sirven el desayuno?' },
+      { de: 'hotel', heure: '09:40', lu: true, texte: '¡Buen día Rosa! El desayuno es de 8 a 10:30, en el comedor de abajo ☕' },
+    ],
+  },
+  {
+    id: 'hugo', nom: 'Hugo electricista', tel: '+54 9 388 455-3307', colonne: 'other', nonLus: 1, enregistre: true,
+    quand: { jour: 'hoy', heure: '08:15' },
+    messages: [{ de: 'huesped', heure: '08:15', texte: 'Mañana paso a ver el tablero de la cabaña 2' }],
+  },
+  {
+    id: 'martinalopez', photo: portrait('women/62'), nom: 'Martina López', tel: '+54 9 11 5873-2264', colonne: 'action', nonLus: 1,
+    quand: { jour: 'ayer', heure: '23:45' },
+    messages: [{ de: 'huesped', heure: '23:45', texte: '¡Perdón la hora! ¿Se puede hacer check-in a las 7 de la mañana? Llegamos en el bus nocturno' }],
+  },
+  {
+    id: 'lukas', photo: portrait('men/84'), nom: 'Lukas (Alemania)', tel: '+49 151 2384 7710', colonne: 'paid', nonLus: 0,
+    quand: { jour: 'ayer', heure: '22:10' },
+    messages: [
+      { de: 'huesped', heure: '22:02', texte: 'Hi! Do you have a bed tonight? I am at the bus terminal' },
+      { de: 'hotel', heure: '22:05', lu: true, texte: 'Hi Lukas! Yes, one bed left in the dorm, $18.000 with breakfast. Walk 5 minutes up Belgrano street 🙂' },
+      { de: 'huesped', heure: '22:10', texte: 'Perfect, on my way!' },
+    ],
+  },
+  {
+    id: 'raul', nom: 'Remis Tilcara · Raúl', tel: '+54 9 388 401-7765', colonne: 'other', nonLus: 0, enregistre: true,
+    quand: { jour: 'ayer', heure: '18:30' },
+    messages: [{ de: 'huesped', heure: '18:30', texte: 'El traslado de las 6 al aeropuerto está confirmado 🚗' }],
+  },
+  {
+    id: 'panaderia', nom: 'Panadería San José', tel: '+54 9 388 495-1120', colonne: 'other', nonLus: 0, enregistre: true,
+    quand: { jour: 'ayer', heure: '07:30' },
+    messages: [{ de: 'huesped', heure: '07:30', texte: 'Mañana van 4 docenas de medialunas como siempre?' }],
+  },
+  {
+    id: 'paula', photo: portrait('women/24'), nom: 'Paula Benítez', tel: '+54 9 341 622-0981', colonne: 'other', nonLus: 0,
+    quand: { jour: 'semaine', es: 'miércoles', fr: 'mercredi' },
+    messages: [
+      { de: 'huesped', heure: '10:02', texte: '¡Gracias por todo! Ya dejamos la reseña en Google ⭐⭐⭐⭐⭐' },
+      { de: 'hotel', heure: '10:15', lu: true, texte: '¡Gracias a ustedes, Paula! Un abrazo grande y vuelvan cuando quieran 💛' },
+    ],
+  },
+  {
+    id: 'marta', photo: portrait('women/88'), nom: 'Tía Marta', tel: '+54 9 388 402-6614', colonne: 'other', nonLus: 0, enregistre: true,
+    quand: { jour: 'semaine', es: 'martes', fr: 'mardi' },
+    messages: [{ de: 'huesped', heure: '20:10', texte: '¿Cómo andan? Les mando un beso grande a todos 💕' }],
+  },
+  {
+    id: 'ignacio', photo: portrait('men/29'), nom: 'Ignacio Herrera', tel: '+54 9 11 4471-9036', colonne: 'other', nonLus: 0,
+    quand: { jour: 'semaine', es: 'lunes', fr: 'lundi' },
+    messages: [
+      { de: 'huesped', heure: '09:20', texte: 'Hola, tengo que cancelar la reserva del 20, se me complicó el trabajo 😞' },
+      { de: 'hotel', heure: '09:35', lu: true, texte: '¡Qué pena, Ignacio! Te devolvemos la seña como dice la política de cancelación. ¡Ojalá vengas pronto!' },
+    ],
+  },
+
+  // ── Messenger ──
+  {
+    id: 'mamani', canal: 'messenger', photo: portrait('men/65'), nom: 'Carlos Mamani', tel: 'Messenger', colonne: 'action', nonLus: 1,
+    quand: { jour: 'hoy', heure: '12:22' },
+    messages: [{ de: 'huesped', heure: '12:22', texte: 'Buenas! ¿Hacen descuento para jubilados? Vamos con mi señora en diciembre' }],
+  },
+  {
+    id: 'luciab', canal: 'messenger', photo: portrait('women/41'), nom: 'Lucía Barrios', tel: 'Messenger', colonne: 'unpaid', enCours: true, nonLus: 0,
+    quand: { jour: 'hoy', heure: '10:05' },
+    messages: [
+      { de: 'huesped', heure: '09:58', texte: 'Quiero reservar la doble del 13 al 15 de diciembre' },
+      { de: 'hotel', heure: '10:05', lu: true, texte: '¡Perfecto, Lucía! Son $136.000 las 2 noches. Para confirmarla te pido una seña del 30 %: $40.800 por Mercado Pago.' },
+    ],
+  },
+  {
+    id: 'trekking', canal: 'messenger', photo: portrait('men/90'), nom: 'Club de Trekking Jujuy', tel: 'Messenger', colonne: 'action', nonLus: 2,
+    quand: { jour: 'hoy', heure: '09:55' },
+    messages: [
+      { de: 'huesped', heure: '09:54', texte: 'Hola! Somos un grupo de 10 que vamos a subir al Hornocal' },
+      { de: 'huesped', heure: '09:55', texte: '¿Tienen lugar para la noche del 14 de noviembre?' },
+    ],
+  },
+  {
+    id: 'feria', canal: 'messenger', photo: portrait('women/58'), nom: 'Feria Artesanal Tilcara', tel: 'Messenger', colonne: 'other', nonLus: 0,
+    quand: { jour: 'ayer', heure: '16:00' },
+    messages: [
+      { de: 'huesped', heure: '15:52', texte: 'Hola Hermine! El domingo armamos la feria en la plaza, ¿pueden avisar a sus huéspedes?' },
+      { de: 'hotel', heure: '16:00', lu: true, texte: '¡Claro! Lo pongo en el pizarrón de la recepción 🙌' },
+    ],
+  },
+  {
+    id: 'ezequiel', canal: 'messenger', photo: portrait('men/18'), nom: 'Ezequiel Romero', tel: 'Messenger', colonne: 'paid', nonLus: 0,
+    quand: { jour: 'semaine', es: 'miércoles', fr: 'mercredi' },
+    messages: [
+      { de: 'huesped', heure: '18:40', texte: 'Pagado! 👍' },
+      { de: 'hotel', heure: '18:44', lu: true, texte: 'Gracias, Ezequiel. Quedó confirmada la cabaña del 21 al 23 de noviembre.' },
+    ],
+  },
+  {
+    id: 'aurelio', canal: 'messenger', photo: portrait('men/77'), nom: 'Don Aurelio · Cerámica', tel: 'Messenger', colonne: 'other', nonLus: 0,
+    quand: { jour: 'semaine', es: 'martes', fr: 'mardi' },
+    messages: [{ de: 'huesped', heure: '11:15', texte: 'Te dejé las tazas nuevas en la recepción, después arreglamos 🙏' }],
+  },
+
+  // ── Instagram ──
+  {
+    id: 'agus', canal: 'instagram', photo: portrait('women/14'), nom: 'Agus', tel: '@agus.viaja', colonne: 'action', nonLus: 2,
+    quand: { jour: 'hoy', heure: '13:15' },
+    messages: [
+      { de: 'huesped', heure: '13:14', texte: 'Holaa! Me encantó el hostal 😍' },
+      { de: 'huesped', heure: '13:15', texte: '¿Tienen lugar el finde largo de noviembre? Somos 3' },
+    ],
+  },
+  {
+    id: 'marina', canal: 'instagram', photo: portrait('women/76'), nom: 'Marina Ríos', tel: '@marinarios', colonne: 'unpaid', enCours: true, nonLus: 0,
+    quand: { jour: 'hoy', heure: '11:10' },
+    messages: [
+      { de: 'huesped', heure: '11:02', texte: 'Dale, la reservo!' },
+      { de: 'hotel', heure: '11:10', lu: true, texte: '¡Genial, Marina! Te paso por acá el link de Mercado Pago para la seña y queda confirmada.' },
+    ],
+  },
+  {
+    id: 'romi', canal: 'instagram', photo: portrait('women/5'), nom: 'Romina Paz', tel: '@romi.paz', colonne: 'paid', nonLus: 0,
+    quand: { jour: 'ayer', heure: '12:00' },
+    messages: [
+      { de: 'huesped', heure: '11:55', texte: 'Listo, pagué la seña ✨' },
+      { de: 'hotel', heure: '12:00', lu: true, texte: '¡Recibido, Romi! Te esperamos el 7 🙌' },
+    ],
+  },
+  {
+    id: 'bruno', canal: 'instagram', photo: portrait('men/9'), nom: 'Bruno · Viajes Low Cost', tel: '@brunolowcost', colonne: 'other', nonLus: 1,
+    quand: { jour: 'ayer', heure: '19:20' },
+    messages: [{ de: 'huesped', heure: '19:20', texte: 'Hola! Hago contenido de viajes (80k seguidores), ¿les interesa un canje por 2 noches?' }],
+  },
+  {
+    id: 'pedrojuli', canal: 'instagram', photo: portrait('men/38'), nom: 'Pedro y Juli', tel: '@pedroyjuli', colonne: 'other', nonLus: 0,
+    quand: { jour: 'semaine', es: 'lunes', fr: 'lundi' },
+    messages: [
+      { de: 'huesped', heure: '21:30', texte: '¡Gracias por todo! Volvemos seguro 💛' },
+      { de: 'hotel', heure: '21:41', lu: true, texte: '❤️' },
+    ],
+  },
+  {
+    id: 'yoga', canal: 'instagram', photo: portrait('women/93'), nom: 'Yoga en la Quebrada', tel: '@yogaquebrada', colonne: 'other', nonLus: 0,
+    quand: { jour: 'semaine', es: 'domingo', fr: 'dimanche' },
+    messages: [{ de: 'huesped', heure: '17:05', texte: 'Hola! Organizamos un retiro de yoga en marzo, ¿podríamos hablar de alojamiento para 12 personas?' }],
+  },
+
+  // ── Mail ──
+  {
+    id: 'claire', canal: 'mail', photo: portrait('women/49'), nom: 'Claire Dubois', tel: 'claire.dubois@gmail.com', colonne: 'action', nonLus: 1,
+    quand: { jour: 'hoy', heure: '08:50' },
+    messages: [{ de: 'huesped', heure: '08:50', texte: 'Bonjour, nous sommes deux Français et voudrions réserver une chambre double du 2 au 5 décembre. Acceptez-vous les cartes bancaires ? Merci !' }],
+  },
+  {
+    id: 'colegio', canal: 'mail', nom: 'Colegio San Martín', tel: 'viajes@colegiosanmartin.edu.ar', colonne: 'action', nonLus: 1,
+    quand: { jour: 'hoy', heure: '11:20' },
+    messages: [{ de: 'huesped', heure: '11:20', texte: 'Estimados: solicitamos disponibilidad y tarifa para 22 alumnos y 3 docentes, del 10 al 13 de abril, con desayuno y cena. Quedamos atentos.' }],
+  },
+  {
+    id: 'minera', canal: 'mail', nom: 'Minera Aguilar · RR.HH.', tel: 'rrhh@mineraaguilar.com.ar', colonne: 'action', nonLus: 1,
+    quand: { jour: 'ayer', heure: '15:40' },
+    messages: [{ de: 'huesped', heure: '15:40', texte: 'Buenas tardes: necesitamos alojamiento para 4 técnicos, del 16 al 20 de noviembre, en habitaciones dobles. ¿Pueden emitir factura A?' }],
+  },
+  {
+    id: 'despegar', canal: 'mail', nom: 'Despegar', tel: 'notificaciones@despegar.com', colonne: 'other', nonLus: 0,
+    quand: { jour: 'ayer', heure: '09:00' },
+    messages: [{ de: 'huesped', heure: '09:00', texte: 'Nueva reseña de un huésped: «Excelente atención y una vista increíble». Puntaje 9,4' }],
+  },
+  {
+    id: 'turismojujuy', canal: 'mail', nom: 'Turismo Jujuy', tel: 'info@turismo.jujuy.gob.ar', colonne: 'other', nonLus: 0,
+    quand: { jour: 'semaine', es: 'martes', fr: 'mardi' },
+    messages: [{ de: 'huesped', heure: '10:30', texte: 'Le recordamos completar el relevamiento de plazas hoteleras antes del 15 de noviembre.' }],
+  },
+
+  // ── Booking ──
+  {
+    id: 'ana', canal: 'booking', photo: portrait('women/19'), nom: 'Ana Souza', tel: 'Booking.com', colonne: 'action', nonLus: 1,
+    quand: { jour: 'hoy', heure: '12:58' },
+    messages: [{ de: 'huesped', heure: '12:58', texte: 'Olá! Chegamos de Salvador amanhã de manhã, é possível fazer check-in às 11h?' }],
+  },
+  {
+    id: 'yuki', canal: 'booking', nom: 'Yuki Tanaka', tel: 'Booking.com', colonne: 'action', nonLus: 1,
+    quand: { jour: 'hoy', heure: '10:44' },
+    messages: [{ de: 'huesped', heure: '10:44', texte: 'Hello, can I leave my luggage after check-out? My bus leaves at 6 pm.' }],
+  },
+  {
+    id: 'james', canal: 'booking', photo: portrait('men/26'), nom: 'James Carter', tel: 'Booking.com', colonne: 'other', enCours: true, nonLus: 0,
+    quand: { jour: 'ayer', heure: '20:12' },
+    messages: [
+      { de: 'huesped', heure: '20:05', texte: 'Is breakfast included?' },
+      { de: 'hotel', heure: '20:12', lu: true, texte: 'Hi James! Yes, breakfast is included, from 8 to 10:30. See you soon!' },
+    ],
+  },
+  {
+    id: 'elena', canal: 'booking', photo: portrait('women/37'), nom: 'Elena Rossi', tel: 'Booking.com', colonne: 'other', nonLus: 0,
+    quand: { jour: 'ayer', heure: '11:30' },
+    messages: [
+      { de: 'huesped', heure: '11:22', texte: 'Grazie! Can we pay the city tax in cash?' },
+      { de: 'hotel', heure: '11:30', lu: true, texte: 'Hi Elena, yes: cash or card, as you prefer.' },
+    ],
+  },
+  {
+    id: 'mateof', canal: 'booking', photo: portrait('men/51'), nom: 'Mateo Fernández', tel: 'Booking.com', colonne: 'other', nonLus: 0,
+    quand: { jour: 'semaine', es: 'miércoles', fr: 'mercredi' },
+    messages: [
+      { de: 'huesped', heure: '14:10', texte: '¿Hay estacionamiento?' },
+      { de: 'hotel', heure: '14:16', lu: true, texte: '¡Sí, Mateo! Tenemos cochera gratis para huéspedes.' },
+    ],
+  },
+)
+
+/**
+ * Du plus récent au plus ancien, comme WhatsApp : aujourd'hui à l'heure près,
+ * puis hier, les jours de la semaine (on est vendredi), enfin les dates.
+ */
+/** Les jours écoulés de la semaine, du plus ancien au plus récent. */
+const JOURS_SEMAINE = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi']
+export function cleQuand(q: Quand) {
+  switch (q.jour) {
+    case 'hoy': return `4 ${q.heure}`
+    case 'ayer': return `3 ${q.heure}`
+    case 'semaine': return `2 ${JOURS_SEMAINE.indexOf(q.fr)}`
+    case 'date': {
+      const [j, m, a] = q.date.split('/')
+      return `1 ${a}-${m}-${j}`
+    }
+  }
+}
+
 /** Les contacts de la zone Perso reçoivent leurs longs fils (src/lib/perso.ts). */
 export const conversations: Conversation[] = brutes.map((c) => (filsPerso[c.id] ? { ...c, messages: filsPerso[c.id] } : c))
 
