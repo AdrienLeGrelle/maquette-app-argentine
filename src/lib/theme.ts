@@ -171,6 +171,91 @@ export const revolut: CouleursWa = {
   pastille: 'rgba(255,255,255,0.09)',
 }
 
+/**
+ * Instagram et Messenger : leurs messages gardent leur propre allure, pour
+ * que l'hôtelier reconnaisse d'un coup d'œil d'où vient la discussion.
+ */
+const instaClair = {
+  fond: '#FFFFFF',
+  encre: '#000000',
+  gris: '#737373',
+  ligne: '#DBDBDB',
+  champ: '#EFEFEF',
+  bulleIn: '#EFEFEF',
+  bulleOut: '#7638FA',
+  surBulleOut: '#FFFFFF',
+  /** Non-lus, « Envoyer », l'appareil photo de la saisie. */
+  accent: '#0095F6',
+  surAccent: '#FFFFFF',
+  enLigne: '#1CD14F',
+  avatar: '#DBDBDB',
+  avatarIcone: '#FFFFFF',
+  chipActif: '#000000',
+  surChipActif: '#FFFFFF',
+}
+
+export type CouleursFil = typeof instaClair
+
+const instaSombre: CouleursFil = {
+  fond: '#000000',
+  encre: '#F5F5F5',
+  gris: '#A8A8A8',
+  ligne: '#262626',
+  champ: '#262626',
+  bulleIn: '#262626',
+  bulleOut: '#7638FA',
+  surBulleOut: '#FFFFFF',
+  accent: '#0095F6',
+  surAccent: '#FFFFFF',
+  enLigne: '#1CD14F',
+  avatar: '#363636',
+  avatarIcone: '#A8A8A8',
+  chipActif: '#F5F5F5',
+  surChipActif: '#000000',
+}
+
+const messengerClair: CouleursFil = {
+  fond: '#FFFFFF',
+  encre: '#050505',
+  gris: '#65676B',
+  ligne: '#E4E6EB',
+  champ: '#F0F2F5',
+  bulleIn: '#F0F0F0',
+  bulleOut: '#0A7CFF',
+  surBulleOut: '#FFFFFF',
+  accent: '#0A7CFF',
+  surAccent: '#FFFFFF',
+  enLigne: '#31A24C',
+  avatar: '#E4E6EB',
+  avatarIcone: '#FFFFFF',
+  chipActif: '#EBF5FF',
+  surChipActif: '#0064D1',
+}
+
+const messengerSombre: CouleursFil = {
+  fond: '#000000',
+  encre: '#E4E6EB',
+  gris: '#B0B3B8',
+  ligne: '#3A3B3C',
+  champ: '#3A3B3C',
+  bulleIn: '#303030',
+  bulleOut: '#0A7CFF',
+  surBulleOut: '#FFFFFF',
+  accent: '#2D88FF',
+  surAccent: '#FFFFFF',
+  enLigne: '#31A24C',
+  avatar: '#3A3B3C',
+  avatarIcone: '#B0B3B8',
+  chipActif: '#263951',
+  surChipActif: '#2D88FF',
+}
+
+export function useFil(canal: 'instagram' | 'messenger'): CouleursFil {
+  const sombre = useColorScheme() === 'dark'
+  if (canal === 'instagram') return sombre ? instaSombre : instaClair
+  return sombre ? messengerSombre : messengerClair
+}
+
 /** Le dégradé de fond de la mise en route, du haut vers le bas. */
 export const degradeMiseEnRoute = ['#17484A', '#0F2A31', '#0A161B']
 

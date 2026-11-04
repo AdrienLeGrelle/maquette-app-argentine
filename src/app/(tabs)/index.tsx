@@ -6,6 +6,7 @@ import { NouvelleCategorie } from '@/components/NouvelleCategorie'
 import { Points } from '@/components/Points'
 import { BoutonAgent } from '@/components/Agent'
 import { Glisser } from '@/components/Glisser'
+import { EnteteBoite, LigneBoite, SectionMessages } from '@/components/Boites'
 import { LogoCanal } from '@/components/Logos'
 import { Triables, type PoigneeTri } from '@/components/Triables'
 import { Repere } from '@/components/Repere'
@@ -13,7 +14,7 @@ import { useTexteEtape } from '@/components/Paiement'
 import { pesos, type Conversation } from '@/lib/demo'
 import { canalDe, estPourMoi, useEtat, useT, type Categorie } from '@/lib/etat'
 import { Avatar, Icon, type IconName } from '@/lib/icons'
-import { useWa } from '@/lib/theme'
+import { useFil, useWa } from '@/lib/theme'
 
 /** `action`, `agent`, `toutes`, `perso`, ou l'id d'une catégorie créée par l'hôtelier. */
 type Filtre = string
@@ -34,6 +35,10 @@ function DiscussionsOuvertes() {
   const { conecte, convs: toutes, categories, agentLance, regleContacts, mettrePourMoi, confierAgent, ordreFiltres, setOrdreFiltres, membreVu, boite, boites } = useEtat()
   // La boîte choisie dans la barre du bas : WhatsApp, Messenger, Instagram…
   const convs = toutes.filter((c) => canalDe(c) === boite)
+  // Instagram et Messenger gardent leur mise en page ; WhatsApp et les autres, celle de Roomz.
+  const habit = boite === 'instagram' || boite === 'messenger' ? boite : null
+  const f = useFil(habit ?? 'instagram')
+  const teinte = habit ? { actifFond: f.chipActif, actifEncre: f.surChipActif, fond: f.fond, encre: f.encre, bord: f.ligne } : undefined
   // Agent pas encore lancé : rien n'est trié, on ne montre que « Toutes ».
   const [filtre, setFiltre] = useState<Filtre>(agentLance ? 'action' : 'toutes')
   const verrouille = !agentLance && (filtre === 'action' || filtre === 'agent')
@@ -51,7 +56,7 @@ function DiscussionsOuvertes() {
   const cles = [...ordreFiltres, ...categories.map((c) => c.id).filter((id) => !ordreFiltres.includes(id))].filter((k) => gerant || k !== 'perso')
 
   const puce = (cle: string, p: PoigneeTri) => {
-    const commun = { actif: filtre === cle, onPress: () => setFiltre(cle), poignee: p }
+    const commun = { actif: filtre === cle, onPress: () => setFiltre(cle), poignee: p, teinte }
     if (cle === 'action') return (
       <Repere cle="filtreAction" rayon={22}>
         <Chip {...commun} eteint={!agentLance} label={t('Te toca', 'Action requise') + (agentLance && nAction > 0 ? ` ${nAction}` : '')} />
@@ -65,34 +70,40 @@ function DiscussionsOuvertes() {
   }
 
   return (
-    <SafeAreaView edges={['top']} style={[s.flex, { backgroundColor: wa.fond }]}>
+    <SafeAreaView edges={['top']} style={[s.flex, { backgroundColor: habit ? f.fond : wa.fond }]}>
       <ScrollView keyboardShouldPersistTaps="handled">
-        <View style={s.haut}>
-          <Rond icon="dots" />
-          <View style={s.hautDroite}>
-            <Rond icon="camera" />
-            <Repere cle="nouvelleReservation" rayon={24}>
-              <Pressable accessibilityRole="button" accessibilityLabel={t('Nueva reserva', 'Nouvelle réservation')}
-                         style={[s.rond, { backgroundColor: wa.vert }]}>
-                <Icon name="plus" size={22} color={wa.surVert} trait={2.4} />
-              </Pressable>
-            </Repere>
+        {habit ? (
+          <EnteteBoite canal={habit} recherche={recherche} setRecherche={setRecherche} droite={<BoutonAgent />} />
+        ) : (
+          <>
+          <View style={s.haut}>
+            <Rond icon="dots" />
+            <View style={s.hautDroite}>
+              <Rond icon="camera" />
+              <Repere cle="nouvelleReservation" rayon={24}>
+                <Pressable accessibilityRole="button" accessibilityLabel={t('Nueva reserva', 'Nouvelle réservation')}
+                           style={[s.rond, { backgroundColor: wa.vert }]}>
+                  <Icon name="plus" size={22} color={wa.surVert} trait={2.4} />
+                </Pressable>
+              </Repere>
+            </View>
           </View>
-        </View>
 
-        <View style={s.titreLigne}>
-          <View style={s.titreBoite}>
-            {boites.length > 1 && <LogoCanal nom={boite} size={30} />}
-            <Text accessibilityRole="header" style={[s.titre, { color: wa.encre }]}>{t('Chats', 'Discussions')}</Text>
+          <View style={s.titreLigne}>
+            <View style={s.titreBoite}>
+              {boites.length > 1 && <LogoCanal nom={boite} size={30} />}
+              <Text accessibilityRole="header" style={[s.titre, { color: wa.encre }]}>{t('Chats', 'Discussions')}</Text>
+            </View>
+            <BoutonAgent />
           </View>
-          <BoutonAgent />
-        </View>
 
-        <View style={[s.champ, { backgroundColor: wa.champ }]}>
-          <Icon name="search" size={18} color={wa.gris} />
-          <TextInput value={recherche} onChangeText={setRecherche} placeholder={t('Buscar', 'Rechercher')}
-                     placeholderTextColor={wa.gris} style={[s.champTexte, { color: wa.encre }]} />
-        </View>
+          <View style={[s.champ, { backgroundColor: wa.champ }]}>
+            <Icon name="search" size={18} color={wa.gris} />
+            <TextInput value={recherche} onChangeText={setRecherche} placeholder={t('Buscar', 'Rechercher')}
+                       placeholderTextColor={wa.gris} style={[s.champTexte, { color: wa.encre }]} />
+          </View>
+          </>
+        )}
 
         {conecte ? (
           <>
@@ -106,6 +117,7 @@ function DiscussionsOuvertes() {
               </Repere>
             } />
 
+            {habit && <SectionMessages canal={habit} />}
             {filtre === 'perso' && (
               <Text style={[s.pourMoiNote, { color: wa.gris }]}>
                 L’agent ne répond jamais ici. Glissez une discussion vers la gauche pour la confier à l’agent.
@@ -130,7 +142,7 @@ function DiscussionsOuvertes() {
                 { label: 'Agent', icon: 'sparkles', couleur: wa.vert, onPress: () => confierAgent(c.id) },
                 ...(gerant ? [{ label: 'Perso', icon: 'lock' as const, couleur: wa.zoneMoi, onPress: () => mettrePourMoi(c.id, true) }] : []),
               ]}>
-                <Ligne c={c} />
+                {habit ? <LigneBoite c={c} canal={habit} /> : <Ligne c={c} />}
               </Glisser>
             ))}
             {!verrouille && liste.length === 0 && (
@@ -167,15 +179,19 @@ function garde(c: Conversation, f: Filtre, categories: Categorie[]) {
   return categories.find((cat) => cat.id === f)?.ids.includes(c.id) ?? false
 }
 
-function Chip({ label, actif, onPress, points, eteint, icon, poignee }: {
-  label: string; actif: boolean; onPress: () => void; points?: boolean; eteint?: boolean; icon?: IconName; poignee: PoigneeTri
+/** Les couleurs d'une puce quand la boîte a sa propre allure (Instagram, Messenger). */
+type Teinte = { actifFond: string; actifEncre: string; fond: string; encre: string; bord: string }
+
+function Chip({ label, actif, onPress, points, eteint, icon, poignee, teinte }: {
+  label: string; actif: boolean; onPress: () => void; points?: boolean; eteint?: boolean; icon?: IconName; poignee: PoigneeTri; teinte?: Teinte
 }) {
   const wa = useWa()
-  const encre = actif && !eteint ? wa.vertEncre : wa.chipEncre
+  const k = teinte ?? { actifFond: wa.vertWash, actifEncre: wa.vertEncre, fond: wa.fond, encre: wa.chipEncre, bord: wa.chipBord }
+  const encre = actif && !eteint ? k.actifEncre : k.encre
   return (
     <Pressable onPress={() => { onPress(); poignee.reveler() }}
                accessibilityRole="button" accessibilityState={{ selected: actif }} accessibilityHint="Glisser à gauche ou à droite pour déplacer"
-               style={[s.chip, actif && !eteint ? { backgroundColor: wa.vertWash, borderColor: wa.vertWash } : { borderColor: wa.chipBord, backgroundColor: wa.fond },
+               style={[s.chip, actif && !eteint ? { backgroundColor: k.actifFond, borderColor: k.actifFond } : { borderColor: k.bord, backgroundColor: k.fond },
                        eteint && !poignee.glisse && { opacity: actif ? 0.7 : 0.4 }, poignee.glisse && { borderColor: wa.vert }]}>
       {icon && <Icon name={icon} size={14} color={encre} trait={2} />}
       <Text style={[s.chipTexte, { color: encre }]}>{label}</Text>

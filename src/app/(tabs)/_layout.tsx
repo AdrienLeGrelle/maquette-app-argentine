@@ -61,7 +61,7 @@ export default function OngletsLayout() {
         <Eventail boites={boites} boite={boite} centre={centre} bas={barre.hauteur} compte={parBoite}
                   onChoisir={(b) => { setBoite(b); setEventail(false) }} onFermer={() => setEventail(false)} />
       )}
-      {bulle && !agent.ouvert && <BulleGuide largeur={barre.largeur} bas={barre.hauteur} onFermer={fermerBulle} />}
+      {bulle && !agent.ouvert && !eventail && <BulleGuide largeur={barre.largeur} bas={barre.hauteur} onFermer={fermerBulle} />}
       <AgentDemiEcran />
     </Tabs>
   )
@@ -96,7 +96,7 @@ function Barre({ style, ...props }: ViewProps) {
 }
 
 /** Le diamètre d'une boîte dans l'éventail. */
-const TAILLE = 52
+const TAILLE = 46
 
 const NOMS: Record<Boite, string> = { whatsapp: 'WhatsApp', messenger: 'Messenger', instagram: 'Instagram', mail: 'Mail', booking: 'Booking' }
 
@@ -127,10 +127,10 @@ function Eventail({ boites, boite, centre, bas, compte, onChoisir, onFermer }: {
                 <View style={[s.nomBoite, { backgroundColor: wa.fond, borderColor: wa.ligne }]}>
                   <Text style={[s.nomBoiteTexte, { color: wa.encre, fontWeight: b === boite ? '700' : '500' }]}>{NOMS[b]}</Text>
                 </View>
-                <View style={[s.rondBoite, { backgroundColor: wa.fond, borderColor: b === boite ? wa.vert : wa.ligne }]}>
-                  <LogoCanal nom={b} size={34} />
+                <View style={s.rondBoite}>
+                  <LogoCanal nom={b} size={TAILLE} />
                   {n > 0 && (
-                    <View style={[s.badge, s.badgeBoite, { backgroundColor: wa.vert, borderColor: wa.fond }]}>
+                    <View style={[s.badge, s.badgeBoite, { backgroundColor: wa.vert }]}>
                       <Text style={[s.badgeTexte, { color: wa.surVert }]}>{n}</Text>
                     </View>
                   )}
@@ -199,8 +199,8 @@ const s = StyleSheet.create({
   fleche: { position: 'absolute', width: 14, height: 14, transform: [{ rotate: '45deg' }] },
   eventail: { position: 'absolute', width: TAILLE, gap: 10, alignItems: 'center' },
   boite: { flexDirection: 'row', alignItems: 'center' },
-  rondBoite: { width: TAILLE, height: TAILLE, borderRadius: TAILLE / 2, borderWidth: 2, alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(0,0,0,.16)' },
+  rondBoite: { width: TAILLE, height: TAILLE },
   nomBoite: { position: 'absolute', right: TAILLE + 8, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 10, paddingVertical: 4, boxShadow: '0 2px 8px rgba(0,0,0,.12)' },
   nomBoiteTexte: { fontSize: 13 },
-  badgeBoite: { top: -4, left: undefined, right: -6 },
+  badgeBoite: { top: -6, left: undefined, right: -7, borderWidth: 0 },
 })

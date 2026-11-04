@@ -2,14 +2,15 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router'
 import { Fragment, useEffect, useRef, useState, type ComponentRef } from 'react'
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { BulleFil, EcritFil, EnteteFil, JourFil, SaisieFil } from '@/components/Boites'
 import { Brouillons } from '@/components/Brouillons'
 import { BarreReservation, CarteLien, PastilleEtape, ProposerLien } from '@/components/Paiement'
 import { Points } from '@/components/Points'
 import type { Message } from '@/lib/demo'
 import { brouillonsPerso } from '@/lib/perso'
-import { estPourMoi, useEtat, useT } from '@/lib/etat'
+import { canalDe, estPourMoi, useEtat, useT } from '@/lib/etat'
 import { Avatar, Icon } from '@/lib/icons'
-import { useWa } from '@/lib/theme'
+import { useFil, useWa } from '@/lib/theme'
 
 /** Une conversation ouverte, dessinée comme dans WhatsApp. */
 export default function Chat() {
@@ -25,6 +26,10 @@ export default function Chat() {
   const champ = useRef<ComponentRef<typeof TextInput>>(null)
   const c = convs.find((x) => x.id === id)
   const autresNonLues = convs.filter((x) => x.id !== id && x.nonLus > 0).length
+  // Instagram et Messenger gardent leur allure : en-tête, bulles et saisie de l'app d'origine.
+  const canal = c ? canalDe(c) : 'whatsapp'
+  const habit = canal === 'instagram' || canal === 'messenger' ? canal : null
+  const f = useFil(habit ?? 'instagram')
 
   useEffect(() => { if (id) lire(id) }, [id, lire])
 
@@ -53,21 +58,25 @@ export default function Chat() {
   const derniere = c.messages[c.messages.length - 1]
   const propositions = moi && derniere?.de === 'huesped' ? brouillonsPerso[c.id] : undefined
   const corriger = (p: string) => { setTexte(p); champ.current?.focus() }
+  // « Vu » ne se pose que sous le dernier message de l'hôtel que la personne a lu.
+  const dernierVu = c.messages.findLastIndex((m) => m.de === 'hotel' && !m.etape && !m.lien && m.lu)
 
   return (
-    <KeyboardAvoidingView style={[s.flex, { backgroundColor: wa.papier }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={[s.entete, { paddingTop: insets.top + 6, backgroundColor: wa.barre, borderBottomColor: wa.ligne }]}>
-        <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} hitSlop={10}
-                   accessibilityRole="button" accessibilityLabel={t('Volver', 'Retour')} style={s.retour}>
-          <Icon name="chevL" size={28} color={wa.encre} trait={2.2} />
-          {autresNonLues > 0 && <Text style={[s.retourNombre, { color: wa.encre }]}>{autresNonLues}</Text>}
-        </Pressable>
-        <Avatar size={36} photo={c.photo} fond={wa.avatar} icone={wa.avatarIcone} />
-        <View style={s.flex}>
-          <Text numberOfLines={1} style={[s.nom, { color: wa.encre }]}>{c.nom}</Text>
-          <Text numberOfLines={1} style={[s.sous, { color: wa.gris }]}>{ecrit ? t('el asistente está escribiendo…', 'l’assistant écrit…') : c.tel}</Text>
+    <KeyboardAvoidingView style={[s.flex, { backgroundColor: habit ? f.fond : wa.papier }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      {habit ? <EnteteFil c={c} canal={habit} ecrit={ecrit} autresNonLues={autresNonLues} /> : (
+        <View style={[s.entete, { paddingTop: insets.top + 6, backgroundColor: wa.barre, borderBottomColor: wa.ligne }]}>
+          <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} hitSlop={10}
+                     accessibilityRole="button" accessibilityLabel={t('Volver', 'Retour')} style={s.retour}>
+            <Icon name="chevL" size={28} color={wa.encre} trait={2.2} />
+            {autresNonLues > 0 && <Text style={[s.retourNombre, { color: wa.encre }]}>{autresNonLues}</Text>}
+          </Pressable>
+          <Avatar size={36} photo={c.photo} fond={wa.avatar} icone={wa.avatarIcone} />
+          <View style={s.flex}>
+            <Text numberOfLines={1} style={[s.nom, { color: wa.encre }]}>{c.nom}</Text>
+            <Text numberOfLines={1} style={[s.sous, { color: wa.gris }]}>{ecrit ? t('el asistente está escribiendo…', 'l’assistant écrit…') : c.tel}</Text>
+          </View>
         </View>
-      </View>
+      )}
 
       {tenue && (
         <View style={[s.tenue, { backgroundColor: wa.barre, borderBottomColor: wa.ligne }]}>
@@ -84,16 +93,21 @@ export default function Chat() {
 
       <ScrollView ref={defile} contentContainerStyle={s.fil}
                   onContentSizeChange={() => defile.current?.scrollToEnd({ animated: false })}>
-        {!c.messages[0]?.jour && <Pastille texte={jour} />}
+        {!c.messages[0]?.jour && (habit ? <JourFil canal={habit} texte={`${jour} ${c.messages[0]?.heure ?? ''}`} /> : <Pastille texte={jour} />)}
         {c.messages.map((m, i) => (
           <Fragment key={i}>
-            {m.jour && <Pastille texte={m.jour} />}
+            {m.jour && (habit ? <JourFil canal={habit} texte={`${m.jour} ${m.heure}`} /> : <Pastille texte={m.jour} />)}
             {m.etape ? <PastilleEtape etape={m.etape} />
+              : habit && !m.lien ? (
+                <BulleFil m={m} canal={habit} photo={c.photo} vu={i === dernierVu}
+                          premier={!memeEnvoi(c.messages[i - 1], m)} dernier={!memeEnvoi(m, c.messages[i + 1])} />
+              )
               : m.lien ? <CarteLien m={{ ...m, lien: m.lien }} suite={i > 0 && !m.jour && c.messages[i - 1].de === m.de && !c.messages[i - 1].etape} />
                 : <Bulle m={m} suite={i > 0 && !m.jour && c.messages[i - 1].de === m.de && !c.messages[i - 1].etape} />}
           </Fragment>
         ))}
-        {ecrit && (
+        {ecrit && habit && <EcritFil canal={habit} />}
+        {ecrit && !habit && (
           <View style={[s.bulle, s.sortante, { backgroundColor: wa.bulleOut }]}>
             <View style={s.ecrit}><Points color={wa.bulleMeta} taille={7} /></View>
           </View>
@@ -108,26 +122,36 @@ export default function Chat() {
         <Brouillons propositions={propositions} onEnvoyer={(p) => envoyer(c.id, p)} onCorriger={corriger} />
       )}
 
-      <View style={[s.saisie, { backgroundColor: wa.barre, borderTopColor: wa.ligne, paddingBottom: Math.max(insets.bottom, 8) }]}>
-        <Icon name="plus" size={26} color={wa.encre} trait={1.8} />
-        <TextInput ref={champ} value={texte} onChangeText={setTexte} onSubmitEditing={mandar} placeholder=""
-                   onFocus={() => setEcriture(true)} onBlur={() => setEcriture(false)}
-                   accessibilityLabel={t('Mensaje', 'Message')}
-                   style={[s.champ, { backgroundColor: wa.saisie, borderColor: wa.ligne, color: wa.encre }]} />
-        {texte.trim() ? (
-          <Pressable onPress={mandar} accessibilityRole="button" accessibilityLabel={t('Mandar', 'Envoyer')}
-                     style={[s.envoyer, { backgroundColor: wa.vert }]}>
-            <Icon name="send" size={18} color={wa.surVert} plein />
-          </Pressable>
-        ) : (
-          <>
-            <Icon name="camera" size={24} color={wa.encre} trait={1.7} />
-            <Icon name="mic" size={24} color={wa.encre} trait={1.7} />
-          </>
-        )}
-      </View>
+      {habit ? (
+        <SaisieFil canal={habit} texte={texte} setTexte={setTexte} onEnvoyer={mandar} champ={champ}
+                   onFocus={() => setEcriture(true)} onBlur={() => setEcriture(false)} />
+      ) : (
+        <View style={[s.saisie, { backgroundColor: wa.barre, borderTopColor: wa.ligne, paddingBottom: Math.max(insets.bottom, 8) }]}>
+          <Icon name="plus" size={26} color={wa.encre} trait={1.8} />
+          <TextInput ref={champ} value={texte} onChangeText={setTexte} onSubmitEditing={mandar} placeholder=""
+                     onFocus={() => setEcriture(true)} onBlur={() => setEcriture(false)}
+                     accessibilityLabel={t('Mensaje', 'Message')}
+                     style={[s.champ, { backgroundColor: wa.saisie, borderColor: wa.ligne, color: wa.encre }]} />
+          {texte.trim() ? (
+            <Pressable onPress={mandar} accessibilityRole="button" accessibilityLabel={t('Mandar', 'Envoyer')}
+                       style={[s.envoyer, { backgroundColor: wa.vert }]}>
+              <Icon name="send" size={18} color={wa.surVert} plein />
+            </Pressable>
+          ) : (
+            <>
+              <Icon name="camera" size={24} color={wa.encre} trait={1.7} />
+              <Icon name="mic" size={24} color={wa.encre} trait={1.7} />
+            </>
+          )}
+        </View>
+      )}
     </KeyboardAvoidingView>
   )
+}
+
+/** Deux messages du même envoi : même auteur, sans date ni pastille entre eux. */
+function memeEnvoi(a: Message | undefined, b: Message | undefined) {
+  return !!a && !!b && a.de === b.de && !b.jour && !a.etape && !b.etape && !a.lien && !b.lien
 }
 
 function Pastille({ texte }: { texte: string }) {
