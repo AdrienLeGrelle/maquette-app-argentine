@@ -1,68 +1,20 @@
 import { router } from 'expo-router'
-import type { ComponentRef, ReactNode, Ref } from 'react'
+import type { ComponentRef, Ref } from 'react'
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Points } from '@/components/Points'
 import type { Conversation, Message } from '@/lib/demo'
-import { useEtat, useT } from '@/lib/etat'
+import { useT } from '@/lib/etat'
 import { Avatar, Icon } from '@/lib/icons'
 import { useFil } from '@/lib/theme'
 
 /**
- * Instagram et Messenger dans Roomz, avec leur propre mise en page : la
- * liste et le fil ressemblent à l'app d'origine, pour qu'on sache d'où
- * écrit la personne sans lire le moindre logo. Tout le reste (filtres,
- * assistant, glisser) reste celui de Roomz.
+ * Instagram et Messenger dans Roomz, avec leur propre allure : les lignes
+ * de la liste et le fil ressemblent à l'app d'origine, pour qu'on sache
+ * d'où écrit la personne. Le haut de page (titre, recherche, filtres),
+ * l'assistant et le glisser restent ceux de Roomz.
  */
 export type Habit = 'instagram' | 'messenger'
-
-/** Le haut de la liste : le compte et la recherche (Instagram), ou le grand titre (Messenger). */
-export function EnteteBoite({ canal, recherche, setRecherche, droite }: {
-  canal: Habit; recherche: string; setRecherche: (v: string) => void; droite: ReactNode
-}) {
-  const f = useFil(canal)
-  const t = useT()
-  const { config } = useEtat()
-  const compte = (config.hotel || 'Hostal Los Andes').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '.')
-  return (
-    <>
-      <View style={s.entete}>
-        {canal === 'instagram' ? (
-          <View style={s.compte}>
-            <Text accessibilityRole="header" style={[s.compteNom, { color: f.encre }]}>{compte}</Text>
-            <Icon name="chevD" size={18} color={f.encre} trait={2.4} />
-          </View>
-        ) : (
-          <Text accessibilityRole="header" style={[s.grandTitre, { color: f.encre }]}>{t('Chats', 'Discussions')}</Text>
-        )}
-        <View style={s.enteteDroite}>
-          {droite}
-          {canal === 'instagram'
-            ? <Icon name="edit" size={24} color={f.encre} trait={1.9} />
-            : <View style={[s.rond, { backgroundColor: f.champ }]}><Icon name="edit" size={19} color={f.encre} trait={2} /></View>}
-        </View>
-      </View>
-      <View style={[s.recherche, canal === 'messenger' && s.recherchePilule, { backgroundColor: f.champ }]}>
-        <Icon name="search" size={17} color={f.gris} trait={2} />
-        <TextInput value={recherche} onChangeText={setRecherche} placeholder={t('Buscar', 'Rechercher')}
-                   placeholderTextColor={f.gris} style={[s.rechercheTexte, { color: f.encre }]} />
-      </View>
-    </>
-  )
-}
-
-/** « Messages · Demandes », sous les filtres, comme dans Instagram. */
-export function SectionMessages({ canal }: { canal: Habit }) {
-  const f = useFil(canal)
-  const t = useT()
-  if (canal !== 'instagram') return null
-  return (
-    <View style={s.section}>
-      <Text style={[s.sectionTitre, { color: f.encre }]}>Messages</Text>
-      <Text style={[s.sectionLien, { color: f.accent }]}>{t('Solicitudes', 'Demandes')}</Text>
-    </View>
-  )
-}
 
 /** L'heure ou le jour d'un fil, en version courte : « 12:55 », « Hier », « mar. ». */
 function quandCourt(c: Conversation, t: (es: string, fr: string) => string) {
@@ -251,18 +203,6 @@ export function SaisieFil({ canal, texte, setTexte, onEnvoyer, champ, onFocus, o
 
 const s = StyleSheet.create({
   flex: { flex: 1 },
-  entete: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 10, paddingBottom: 10 },
-  compte: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  compteNom: { fontSize: 22, fontWeight: '700' },
-  grandTitre: { fontSize: 28, fontWeight: '700' },
-  enteteDroite: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  rond: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  recherche: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, borderRadius: 10, paddingHorizontal: 12, height: 38 },
-  recherchePilule: { borderRadius: 20 },
-  rechercheTexte: { flex: 1, fontSize: 16, height: 38 },
-  section: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 2, paddingBottom: 8 },
-  sectionTitre: { fontSize: 16, fontWeight: '700' },
-  sectionLien: { fontSize: 15, fontWeight: '600' },
   ligne: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 8 },
   nom: { fontSize: 15 },
   apercuLigne: { flexDirection: 'row', marginTop: 2 },

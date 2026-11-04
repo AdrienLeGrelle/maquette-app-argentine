@@ -225,9 +225,49 @@ brutes.push(
     messages: [{ de: 'huesped', heure: '13:02', texte: 'Hola! ¿Tienen lugar este finde para 2? Somos de Salta, llegaríamos el sábado temprano' }],
   },
   {
+    id: 'marcos', canal: 'messenger', photo: portrait('men/15'), nom: 'Marcos Vilte', tel: 'Messenger', colonne: 'action', nonLus: 2,
+    quand: { jour: 'hoy', heure: '11:58' },
+    messages: [
+      { de: 'huesped', heure: '11:57', texte: 'Buenas! Para el Carnaval de Tilcara, ¿todavía tienen algo?' },
+      { de: 'huesped', heure: '11:58', texte: 'Seríamos 4 amigos, del 13 al 17 de febrero' },
+    ],
+  },
+  {
     id: 'ramiro', canal: 'messenger', photo: portrait('men/71'), nom: 'Ramiro · Tejidos Andinos', tel: 'Messenger', colonne: 'other', nonLus: 1,
     quand: { jour: 'hoy', heure: '10:40' },
     messages: [{ de: 'huesped', heure: '10:40', texte: 'Buen día! ¿Te dejo los ponchos nuevos el jueves para la vitrina del hostal?' }],
+  },
+  {
+    id: 'flor', canal: 'messenger', photo: portrait('women/8'), nom: 'Florencia Cruz', tel: 'Messenger', colonne: 'unpaid', enCours: true, nonLus: 0,
+    quand: { jour: 'hoy', heure: '09:12' },
+    messages: [
+      { de: 'huesped', heure: '09:05', texte: 'Hola, ¿el dormitorio tiene lockers? Voy sola, del 6 al 8 de noviembre' },
+      { de: 'hotel', heure: '09:07', lu: true, texte: '¡Hola Florencia! Sí, cada cama tiene su locker con candado. Son 2 noches, $36.000 en total. ¿Te la reservo?' },
+      { de: 'huesped', heure: '09:10', texte: 'Dale!' },
+      { de: 'hotel', heure: '09:12', lu: true, texte: 'Te mando el link de pago de Mercado Pago para confirmarla 👇' },
+    ],
+  },
+  {
+    id: 'elsa', canal: 'messenger', photo: portrait('women/72'), nom: 'Doña Elsa · Dulces regionales', tel: 'Messenger', colonne: 'other', nonLus: 0,
+    quand: { jour: 'ayer', heure: '18:20' },
+    messages: [
+      { de: 'huesped', heure: '18:12', texte: 'Hermine, mañana te llevo los dulces de cayote y los alfajores para el desayuno' },
+      { de: 'hotel', heure: '18:20', lu: true, texte: '¡Gracias Elsa! Dejalos en la cocina como siempre 🙏' },
+    ],
+  },
+  {
+    id: 'turismo', canal: 'messenger', photo: portrait('men/36'), nom: 'Gustavo · Turismo Quebrada', tel: 'Messenger', colonne: 'other', enCours: true, nonLus: 0,
+    quand: { jour: 'semaine', es: 'martes', fr: 'mardi' },
+    messages: [
+      { de: 'huesped', heure: '15:40', texte: '¿Les puedo dejar folletos de la excursión a Hornocal en la recepción?' },
+      { de: 'hotel', heure: '15:44', lu: true, texte: '¡Claro Gustavo! Pasá cuando quieras, hay un lugar al lado de la entrada.' },
+      { de: 'huesped', heure: '15:46', texte: 'Genial, el jueves paso 👍' },
+    ],
+  },
+  {
+    id: 'valen', canal: 'instagram', photo: portrait('women/31'), nom: 'Valentina Ortiz', tel: '@valen.ortiz', colonne: 'action', nonLus: 1,
+    quand: { jour: 'hoy', heure: '13:18' },
+    messages: [{ de: 'huesped', heure: '13:18', texte: '¿Aceptan perros? Viajamos con Lola, es mediana 🐕' }],
   },
   {
     id: 'sofia', canal: 'instagram', photo: portrait('women/65'), nom: 'Sofía', tel: '@sofi.viaja', colonne: 'action', nonLus: 2,
@@ -238,11 +278,37 @@ brutes.push(
     ],
   },
   {
+    id: 'nicocami', canal: 'instagram', photo: portrait('men/22'), nom: 'Nico y Cami', tel: '@nicoycami.viajan', colonne: 'action', nonLus: 3,
+    quand: { jour: 'hoy', heure: '11:32' },
+    messages: [
+      { de: 'huesped', heure: '11:30', texte: 'Hola!! Estamos de luna de miel 💍' },
+      { de: 'huesped', heure: '11:31', texte: '¿Tienen alguna habitación con vista a los cerros?' },
+      { de: 'huesped', heure: '11:32', texte: 'Sería del 20 al 23 de noviembre' },
+    ],
+  },
+  {
     id: 'mochileros', canal: 'instagram', nom: 'Mochileros Argentina', tel: '@mochileros.arg', colonne: 'other', enCours: true, nonLus: 0,
     quand: { jour: 'ayer', heure: '21:14' },
     messages: [
       { de: 'huesped', heure: '21:10', texte: '¿Hacen precio para grupos? Seríamos 6 en el dormitorio' },
       { de: 'hotel', heure: '21:14', lu: true, texte: '¡Hola! Sí, para 6 en el dormitorio la noche sale $16.000 por persona en lugar de $18.000. ¿Qué fechas tienen pensadas?' },
+    ],
+  },
+  {
+    id: 'lucasfoto', canal: 'instagram', photo: portrait('men/55'), nom: 'Lucas · Foto Norte', tel: '@lucas.fotonorte', colonne: 'other', nonLus: 0,
+    quand: { jour: 'ayer', heure: '20:05' },
+    messages: [
+      { de: 'huesped', heure: '19:50', texte: 'Hola! Soy fotógrafo, ¿les interesa un canje de fotos del hostal por dos noches?' },
+      { de: 'hotel', heure: '20:05', lu: true, texte: '¡Hola Lucas! Nos interesa, ¿nos pasás tu portfolio?' },
+    ],
+  },
+  {
+    id: 'meli', canal: 'instagram', photo: portrait('women/54'), nom: 'Meli Torres', tel: '@meli.trs', colonne: 'paid', nonLus: 0,
+    quand: { jour: 'semaine', es: 'lunes', fr: 'lundi' },
+    messages: [
+      { de: 'huesped', heure: '17:02', texte: 'Ya pagué la seña ✨' },
+      { de: 'hotel', heure: '17:05', lu: true, texte: '¡Recibido, Meli! Tu reserva quedó confirmada: habitación doble, del 14 al 16 de noviembre. ¡Te esperamos!' },
+      { de: 'huesped', heure: '17:06', texte: '❤️' },
     ],
   },
   {

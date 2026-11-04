@@ -190,8 +190,6 @@ const instaClair = {
   enLigne: '#1CD14F',
   avatar: '#DBDBDB',
   avatarIcone: '#FFFFFF',
-  chipActif: '#000000',
-  surChipActif: '#FFFFFF',
 }
 
 export type CouleursFil = typeof instaClair
@@ -210,8 +208,6 @@ const instaSombre: CouleursFil = {
   enLigne: '#1CD14F',
   avatar: '#363636',
   avatarIcone: '#A8A8A8',
-  chipActif: '#F5F5F5',
-  surChipActif: '#000000',
 }
 
 const messengerClair: CouleursFil = {
@@ -228,8 +224,6 @@ const messengerClair: CouleursFil = {
   enLigne: '#31A24C',
   avatar: '#E4E6EB',
   avatarIcone: '#FFFFFF',
-  chipActif: '#EBF5FF',
-  surChipActif: '#0064D1',
 }
 
 const messengerSombre: CouleursFil = {
@@ -246,8 +240,6 @@ const messengerSombre: CouleursFil = {
   enLigne: '#31A24C',
   avatar: '#3A3B3C',
   avatarIcone: '#B0B3B8',
-  chipActif: '#263951',
-  surChipActif: '#2D88FF',
 }
 
 export function useFil(canal: 'instagram' | 'messenger'): CouleursFil {
