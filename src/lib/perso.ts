@@ -322,3 +322,20 @@ export const filsPerso: Record<string, Message[]> = {
     ['h', '19:31', '¿Partido el sábado? Faltamos dos'],
   ]),
 }
+
+/**
+ * Deux réponses proposées pour chaque fil Perso, dans le ton d'Hermine :
+ * courtes, directes. Elles répondent au dernier message du contact.
+ */
+export const brouillonsPerso: Record<string, [string, string]> = {
+  banco: ['Dale Carlos, ¿te va bien a las 17?', 'Hoy imposible, ¿mañana a la mañana?'],
+  verduras: ['Genial José, te espero a las 7:45 👍', 'Perfecto, sumale 2 kilos de papa por favor'],
+  mama: ['¡Sí ma! Vamos los dos, llevo el postre ❤️', 'Me encantaría pero tengo el hotel lleno, ¿paso a la tarde?'],
+  pablo: ['Dale, pero el jueves antes de las 10 sin falta', '¿Jueves? La necesito el miércoles, Pablo 😩'],
+  ruben: ['Perfecto Rubén, la cabaña está libre a esa hora', 'Gracias! Dejo la llave en recepción con Rocío'],
+  marcelo: ['Ok Marcelo, avisame el horario del viernes', 'Uf, me quedan dos garrafas. ¿No llegan el jueves?'],
+  lavanderia: ['Genial, gracias! Los espero a la tarde', 'Perfecto, ¿me la pueden traer antes de las 14?'],
+  ines: ['Sí Inés, te las mando este fin de semana', '¿Te sirve si te las paso el lunes? Estoy a full'],
+  rocio: ['Perfecto Rocío, gracias por todo 🙌', 'Dale, y si podés revisá el dormi antes de irte'],
+  fede: ['¡Obvio! Contá conmigo 🧤', 'Este sábado no puedo, tengo el hotel lleno 😢'],
+}

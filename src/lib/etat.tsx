@@ -171,7 +171,8 @@ export function EtatProvider({ children }: { children: ReactNode }) {
         ecrit: false,
         pause: true,
         quand: { jour: 'hoy', heure },
-        messages: [...c.messages, { de: 'hotel', heure, texte, lu: false }],
+        // Répondre à un fil d'un autre jour ouvre la journée d'aujourd'hui.
+        messages: [...c.messages, { de: 'hotel', heure, texte, lu: false, jour: c.quand.jour === 'hoy' ? undefined : 'Aujourd’hui' }],
       })))
     },
     ajouterCategorie: (nom, ids) => {

@@ -2,8 +2,10 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router'
 import { Fragment, useEffect, useRef, useState, type ComponentRef } from 'react'
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Brouillons } from '@/components/Brouillons'
 import { Points } from '@/components/Points'
 import type { Message } from '@/lib/demo'
+import { brouillonsPerso } from '@/lib/perso'
 import { estPourMoi, useEtat, useT } from '@/lib/etat'
 import { Avatar, Icon } from '@/lib/icons'
 import { useWa } from '@/lib/theme'
@@ -16,7 +18,9 @@ export default function Chat() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const { convs, lire, envoyer, agentLance, regleContacts, mettrePourMoi, reprendreMain } = useEtat()
   const [texte, setTexte] = useState('')
+  const [ecriture, setEcriture] = useState(false)
   const defile = useRef<ComponentRef<typeof ScrollView>>(null)
+  const champ = useRef<ComponentRef<typeof TextInput>>(null)
   const c = convs.find((x) => x.id === id)
   const autresNonLues = convs.filter((x) => x.id !== id && x.nonLus > 0).length
 
@@ -42,6 +46,11 @@ export default function Chat() {
     envoyer(c.id, texte.trim())
     setTexte('')
   }
+  // Perso : deux brouillons tant que le contact attend une réponse. Ils
+  // s'effacent dès qu'on écrit soi-même (le clavier monte).
+  const derniere = c.messages[c.messages.length - 1]
+  const propositions = moi && derniere?.de === 'huesped' ? brouillonsPerso[c.id] : undefined
+  const corriger = (p: string) => { setTexte(p); champ.current?.focus() }
 
   return (
     <KeyboardAvoidingView style={[s.flex, { backgroundColor: wa.papier }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -85,9 +94,14 @@ export default function Chat() {
         )}
       </ScrollView>
 
+      {propositions && !ecriture && !texte && (
+        <Brouillons propositions={propositions} onEnvoyer={(p) => envoyer(c.id, p)} onCorriger={corriger} />
+      )}
+
       <View style={[s.saisie, { backgroundColor: wa.barre, borderTopColor: wa.ligne, paddingBottom: Math.max(insets.bottom, 8) }]}>
         <Icon name="plus" size={26} color={wa.encre} trait={1.8} />
-        <TextInput value={texte} onChangeText={setTexte} onSubmitEditing={mandar} placeholder=""
+        <TextInput ref={champ} value={texte} onChangeText={setTexte} onSubmitEditing={mandar} placeholder=""
+                   onFocus={() => setEcriture(true)} onBlur={() => setEcriture(false)}
                    accessibilityLabel={t('Mensaje', 'Message')}
                    style={[s.champ, { backgroundColor: wa.saisie, borderColor: wa.ligne, color: wa.encre }]} />
         {texte.trim() ? (
