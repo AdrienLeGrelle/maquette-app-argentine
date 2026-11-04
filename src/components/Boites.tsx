@@ -16,6 +16,19 @@ import { useFil } from '@/lib/theme'
  */
 export type Habit = 'instagram' | 'messenger'
 
+/** « Messages · Demandes », sous les filtres, comme dans Instagram. */
+export function SectionMessages({ canal }: { canal: Habit }) {
+  const f = useFil(canal)
+  const t = useT()
+  if (canal !== 'instagram') return null
+  return (
+    <View style={s.section}>
+      <Text style={[s.sectionTitre, { color: f.encre }]}>Messages</Text>
+      <Text style={[s.sectionLien, { color: f.accent }]}>{t('Solicitudes', 'Demandes')}</Text>
+    </View>
+  )
+}
+
 /** L'heure ou le jour d'un fil, en version courte : « 12:55 », « Hier », « mar. ». */
 function quandCourt(c: Conversation, t: (es: string, fr: string) => string) {
   const q = c.quand
@@ -203,6 +216,9 @@ export function SaisieFil({ canal, texte, setTexte, onEnvoyer, champ, onFocus, o
 
 const s = StyleSheet.create({
   flex: { flex: 1 },
+  section: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 2, paddingBottom: 8 },
+  sectionTitre: { fontSize: 16, fontWeight: '700' },
+  sectionLien: { fontSize: 15, fontWeight: '600' },
   ligne: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 8 },
   nom: { fontSize: 15 },
   apercuLigne: { flexDirection: 'row', marginTop: 2 },

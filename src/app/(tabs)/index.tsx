@@ -6,7 +6,7 @@ import { NouvelleCategorie } from '@/components/NouvelleCategorie'
 import { Points } from '@/components/Points'
 import { BoutonAgent } from '@/components/Agent'
 import { Glisser } from '@/components/Glisser'
-import { LigneBoite } from '@/components/Boites'
+import { LigneBoite, SectionMessages } from '@/components/Boites'
 import { LogoCanal } from '@/components/Logos'
 import { Triables, type PoigneeTri } from '@/components/Triables'
 import { Repere } from '@/components/Repere'
@@ -109,6 +109,7 @@ function DiscussionsOuvertes() {
               </Repere>
             } />
 
+            {habit && <SectionMessages canal={habit} />}
             {filtre === 'perso' && (
               <Text style={[s.pourMoiNote, { color: wa.gris }]}>
                 L’agent ne répond jamais ici. Glissez une discussion vers la gauche pour la confier à l’agent.

@@ -1,6 +1,5 @@
 import { router } from 'expo-router'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
-import { pesos } from '@/lib/demo'
 import { nomRole } from '@/lib/equipe'
 import { useEtat } from '@/lib/etat'
 import { Avatar } from '@/lib/icons'
@@ -14,7 +13,7 @@ import { useCouleurs, useWa } from '@/lib/theme'
 export function VoirComme() {
   const c = useCouleurs()
   const wa = useWa()
-  const { equipe, vue, setVue, config, sejours, payer, expirer } = useEtat()
+  const { equipe, vue, setVue, config } = useEtat()
 
   const choisir = (id: string | null) => {
     setVue(id)
@@ -28,9 +27,6 @@ export function VoirComme() {
     { id: null, nom: gerant, role: 'Gérant', photo: undefined },
     ...equipe.map((m) => ({ id: m.id, nom: m.prenom, role: nomRole(m.acces), photo: m.photo })),
   ]
-
-  // Les liens envoyés qui attendent leur paiement : on joue le retour de Mercado Pago à la main.
-  const enAttente = sejours.filter((e) => e.lien && e.lien.etat !== 'payee')
 
   return (
     <View style={s.barre}>
@@ -57,30 +53,6 @@ export function VoirComme() {
           )
         })}
       </View>
-
-      {enAttente.length > 0 && (
-        <>
-          <Text style={[s.titre, s.second, { color: c.muted }]}>Démo · paiements Mercado Pago</Text>
-          <View style={s.personnes}>
-            {enAttente.map((e) => (
-              <View key={e.id} style={[s.personne, s.paiement, { backgroundColor: c.surface, borderColor: c.line }]}>
-                <View>
-                  <Text style={[s.nom, { color: c.ink }]}>{e.nom.split(' ')[0]}</Text>
-                  <Text style={[s.role, { color: c.muted }]}>{pesos(e.lien!.montant)}</Text>
-                </View>
-                <Pressable onPress={() => payer(e.id)} accessibilityRole="button" accessibilityLabel={`Simuler le paiement de ${e.nom}`}
-                           style={({ pressed }) => [s.action, { backgroundColor: c.okWash }, pressed && { opacity: 0.7 }]}>
-                  <Text style={[s.actionTexte, { color: c.ok }]}>Payer</Text>
-                </Pressable>
-                <Pressable onPress={() => expirer(e.id)} accessibilityRole="button" accessibilityLabel={`Laisser expirer le lien de ${e.nom}`}
-                           style={({ pressed }) => [s.action, { borderColor: c.line, borderWidth: 1 }, pressed && { opacity: 0.7 }]}>
-                  <Text style={[s.actionTexte, { color: c.muted }]}>Expirer</Text>
-                </Pressable>
-              </View>
-            ))}
-          </View>
-        </>
-      )}
     </View>
   )
 }
@@ -94,8 +66,4 @@ const s = StyleSheet.create({
   initialeTexte: { fontSize: 13, fontWeight: '700' },
   nom: { fontSize: 14, fontWeight: '600' },
   role: { fontSize: 11 },
-  second: { marginTop: 4 },
-  paiement: { paddingLeft: 14, paddingRight: 6, gap: 10 },
-  action: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
-  actionTexte: { fontSize: 13, fontWeight: '600' },
 })
