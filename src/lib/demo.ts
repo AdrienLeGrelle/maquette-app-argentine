@@ -1,3 +1,5 @@
+import { filsPerso } from './perso'
+
 /**
  * Données de démonstration : un petit hôtel de Tilcara, des voyageurs
  * argentins. En attendant le back, c'est la seule source des écrans.
@@ -17,6 +19,8 @@ export type Message = {
   vocal?: string
   /** Pour un message de l'hôtel : lu par le voyageur (coches bleues). */
   lu?: boolean
+  /** Premier message d'une journée : le libellé de la pastille de date au-dessus. */
+  jour?: string
 }
 
 /** Portraits de démonstration (randomuser.me), pour une liste qui ressemble à un vrai téléphone. */
@@ -45,7 +49,7 @@ export type Conversation = {
   messages: Message[]
 }
 
-export const conversations: Conversation[] = [
+const brutes: Conversation[] = [
   {
     id: 'torres', photo: portrait('women/44'), nom: 'Familia Torres', tel: '+54 9 387 512-4410', colonne: 'action', nonLus: 3, epingle: true,
     quand: { jour: 'hoy', heure: '13:24' },
@@ -173,6 +177,9 @@ export const conversations: Conversation[] = [
     messages: [{ de: 'huesped', heure: '10:00', texte: '¿Partido el sábado? Faltamos dos' }],
   },
 ]
+
+/** Les contacts de la zone Perso reçoivent leurs longs fils (src/lib/perso.ts). */
+export const conversations: Conversation[] = brutes.map((c) => (filsPerso[c.id] ? { ...c, messages: filsPerso[c.id] } : c))
 
 /** « $ 190.000 » : pesos, séparateur de milliers à l'argentine. */
 export function pesos(n: number) {

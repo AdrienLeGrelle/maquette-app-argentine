@@ -1,5 +1,5 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router'
-import { useEffect, useRef, useState, type ComponentRef } from 'react'
+import { Fragment, useEffect, useRef, useState, type ComponentRef } from 'react'
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Points } from '@/components/Points'
@@ -71,8 +71,13 @@ export default function Chat() {
 
       <ScrollView ref={defile} contentContainerStyle={s.fil}
                   onContentSizeChange={() => defile.current?.scrollToEnd({ animated: false })}>
-        <View style={[s.jour, { backgroundColor: wa.pastille }]}><Text style={[s.jourTexte, { color: wa.bulleMeta }]}>{jour}</Text></View>
-        {c.messages.map((m, i) => <Bulle key={i} m={m} suite={i > 0 && c.messages[i - 1].de === m.de} />)}
+        {!c.messages[0]?.jour && <Pastille texte={jour} />}
+        {c.messages.map((m, i) => (
+          <Fragment key={i}>
+            {m.jour && <Pastille texte={m.jour} />}
+            <Bulle m={m} suite={i > 0 && !m.jour && c.messages[i - 1].de === m.de} />
+          </Fragment>
+        ))}
         {ecrit && (
           <View style={[s.bulle, s.sortante, { backgroundColor: wa.bulleOut }]}>
             <View style={s.ecrit}><Points color={wa.bulleMeta} taille={7} /></View>
@@ -99,6 +104,11 @@ export default function Chat() {
       </View>
     </KeyboardAvoidingView>
   )
+}
+
+function Pastille({ texte }: { texte: string }) {
+  const wa = useWa()
+  return <View style={[s.jour, { backgroundColor: wa.pastille }]}><Text style={[s.jourTexte, { color: wa.bulleMeta }]}>{texte}</Text></View>
 }
 
 function Bulle({ m, suite }: { m: Message; suite: boolean }) {
