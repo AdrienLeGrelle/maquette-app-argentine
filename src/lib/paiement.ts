@@ -1,5 +1,6 @@
 import { date } from './dates'
 import type { Sejour } from './demo'
+import { HOTEL } from './hotel'
 
 /** Ce que le lien demande, selon le réglage « Arrivées, départs, paiement ». */
 export function montantLien(total: number, regle: string) {
@@ -31,7 +32,12 @@ export function periode(debut: string, fin: string, langue: 'es' | 'fr') {
 }
 
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
-const CHAMBRES_ES: Record<string, string> = { 'Double': 'habitación doble', 'Cabane 4': 'cabaña para 4', 'Dortoir': 'cama en dormitorio' }
+
+/** « habitación doble » : le nom traduit pour le voyageur, en minuscule au milieu d'une phrase. */
+function chambreEs(nom: string) {
+  const es = HOTEL.chambres.find((c) => c.nom === nom)?.es?.nom
+  return es ? es.charAt(0).toLowerCase() + es.slice(1) : nom
+}
 
 /** Le message que Roomz envoie au voyageur quand son paiement arrive, dans sa langue. */
 export function messageConfirmation(e: Sejour, arrivee: string) {
@@ -41,5 +47,5 @@ export function messageConfirmation(e: Sejour, arrivee: string) {
     ? `del ${a.getUTCDate()} al ${b.getUTCDate()} de ${MESES[b.getUTCMonth()]}`
     : `del ${a.getUTCDate()} de ${MESES[a.getUTCMonth()]} al ${b.getUTCDate()} de ${MESES[b.getUTCMonth()]}`
   const prenom = e.nom.split(' ')[0]
-  return `¡Recibimos tu pago, ${prenom}! Tu reserva está confirmada: ${CHAMBRES_ES[e.chambre] ?? e.chambre}, ${dates}. El check-in es desde las ${arrivee}. ¡Te esperamos!`
+  return `¡Recibimos tu pago, ${prenom}! Tu reserva está confirmada: ${chambreEs(e.chambre)}, ${dates}. El check-in es desde las ${arrivee}. ¡Te esperamos!`
 }

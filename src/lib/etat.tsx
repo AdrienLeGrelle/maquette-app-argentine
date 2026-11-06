@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
 import { conversations as conversationsDemo, devis, sejours as sejoursDemo, type Conversation, type Message, type Sejour } from '@/lib/demo'
 import { equipeDemo, type Acces, type Membre } from '@/lib/equipe'
+import { configDemo, type Chambre, type OptionHotel } from '@/lib/hotel'
 import { heurePlus, messageConfirmation, montantLien } from '@/lib/paiement'
 
 /**
@@ -19,7 +20,7 @@ export type Etape = (typeof ETAPES)[number]
 export const ETAPES_RAPIDES: Etape[] = ['vous', 'site', 'hotel', 'chambres']
 export const ETAPES_COMPLETES: Etape[] = ['regles', 'mercadopago', 'style', 'canaux']
 
-export type Chambre = { id: string; nom: string; stock: number; prix: string }
+export type { Chambre, OptionHotel }
 export type Canal = 'instagram' | 'messenger' | 'booking' | 'mail'
 /** La boîte que montre l'onglet Discussions : WhatsApp ou un canal branché. */
 export type Boite = 'whatsapp' | Canal
@@ -37,15 +38,28 @@ export type Config = {
   prenom: string
   role: string | null
   hotel: string
-  ville: string
   type: string | null
+  /** L'adresse exacte : rue et numéro, puis ce que la carte en déduit. */
+  adresse: string
+  ville: string
+  province: string
+  codePostal: string
+  pays: string
+  coords: { lat: number; lng: number }
+  /** Comment venir, en une ou deux phrases. */
+  acces: string
+  presentation: string
+  /** Les photos de l'établissement ; la première sert de couverture. */
+  photos: string[]
+  email: string
+  instagram: string
   site: string
   sansSite: boolean
   booking: string
   google: string
   /** L'analyse des pages en ligne a été faite : options et avis en viennent. */
   analyse: boolean
-  options: string[]
+  options: OptionHotel[]
   aime: string[]
   chambres: Chambre[]
   chambresDuSite: boolean
@@ -54,18 +68,15 @@ export type Config = {
   animaux: boolean
   enfants: boolean
   paiement: string
+  annulation: string
+  /** Ce qu'il vaut mieux savoir avant de réserver (pas de restaurant à côté, l'altitude…). */
+  aSavoir: string[]
   mercadoPago: boolean
   style: 'toutes' | 'selection' | 'aucune'
   styleIds: string[]
   canaux: Record<Canal, boolean>
-}
-
-const configVide: Config = {
-  prenom: '', role: null, hotel: '', ville: '', type: null, site: '', sansSite: false, booking: '', google: '', analyse: false, options: [], aime: [],
-  chambres: [], chambresDuSite: false, arrivee: '14 h', depart: '10 h', animaux: false, enfants: true,
-  paiement: 'Le total', mercadoPago: false, style: 'toutes', styleIds: [],
-  // Démo : tous les canaux déjà branchés, pour montrer l'éventail des boîtes dès l'ouverture.
-  canaux: { instagram: true, messenger: true, booking: true, mail: true },
+  /** Les textes de l'hôtelier, traduits par Roomz pour le voyageur. */
+  es: { presentation: string; acces: string; annulation: string; aSavoir: string[]; aime: string[] }
 }
 
 type Etat = {
@@ -183,11 +194,12 @@ export function EtatProvider({ children }: { children: ReactNode }) {
   const [conecte, setConecte] = useState(true)
   const [convs, setConvs] = useState(conversationsDemo)
   const [categories, setCategories] = useState<Categorie[]>([])
-  const [config, setConfig] = useState(configVide)
-  const [faites, setFaites] = useState<Etape[]>([])
+  // La démo s'ouvre sur un hôtel entièrement configuré, agent lancé.
+  const [config, setConfig] = useState(configDemo)
+  const [faites, setFaites] = useState<Etape[]>([...ETAPES])
   const [bulleFermee, setBulleFermee] = useState(false)
   const [montrer, setMontrer] = useState<string | null>(null)
-  const [agentLance, setAgentLance] = useState(false)
+  const [agentLance, setAgentLance] = useState(true)
   const [checkins, setCheckins] = useState<string[]>([])
   const [regleContacts, setRegleContacts] = useState(true)
   const [agent, setAgent] = useState<{ ouvert: boolean; question?: string; n: number }>({ ouvert: false, n: 0 })

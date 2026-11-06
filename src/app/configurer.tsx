@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Champ, Coche, Compteur, Groupe, Interrupteur, Libelle, Note, Puces, Question } from '@/components/Formulaire'
 import { LogoCanal, type Logo } from '@/components/Logos'
 import { esquisse } from '@/lib/demo'
+import { prixOption } from '@/lib/hotel'
 import { ETAPES_COMPLETES, ETAPES_RAPIDES, useEtat, type Canal, type Etape } from '@/lib/etat'
 import { AvatarVide, Icon } from '@/lib/icons'
 import { telLisible } from '@/lib/tel'
@@ -125,7 +126,7 @@ function Contenu({ etape }: { etape: Etape }) {
       return (
         <Bloc>
           <Question titre="Vos chambres et vos prix" sous="Par type, comme vous les comptez : 3 doubles, 2 cabanes…" />
-          {config.chambresDuSite && <Note ok>Trouvé sur Booking et votre site. Vérifiez et corrigez si besoin.</Note>}
+          {config.chambresDuSite && <Note ok>{`Trouvé sur Booking${config.site ? ' et votre site' : ''}. Vérifiez et corrigez si besoin.`}</Note>}
           {config.chambres.map((c) => (
             <Groupe key={c.id}>
               <View style={s.chambreHaut}>
@@ -150,7 +151,7 @@ function Contenu({ etape }: { etape: Etape }) {
               </View>
             </Groupe>
           ))}
-          <Pressable onPress={() => majConfig({ chambres: [...config.chambres, { id: `c${Date.now()}`, nom: '', stock: 1, prix: '' }] })}
+          <Pressable onPress={() => majConfig({ chambres: [...config.chambres, { id: `c${Date.now()}`, nom: '', stock: 1, prix: '', capacite: 2, lits: '', description: '', equipements: [], photos: [] }] })}
                      accessibilityRole="button" style={[s.ajouter, { borderColor: wa.chipBord }]}>
             <Icon name="plus" size={20} color={wa.vert} />
             <Text style={[s.ajouterTexte, { color: wa.vert }]}>Ajouter un type de chambre</Text>
@@ -352,7 +353,7 @@ function Analyse() {
         </Depliable>
         <Depliable titre={`Arrivée ${config.arrivee} · départ ${config.depart}`} resume="Horaires" />
         <Depliable titre={`${config.options.length} options`} resume="Services">
-          {config.options.map((o) => <Text key={o} style={[s.detail, { color: wa.encre }]}>• {o}</Text>)}
+          {config.options.map((o) => <Text key={o.id} style={[s.detail, { color: wa.encre }]}>• {o.nom} · {prixOption(o)}</Text>)}
         </Depliable>
         <Depliable titre="Ce que vos voyageurs aiment" resume={`${esquisse.avis.nombre} avis Google · ${esquisse.avis.note} ★`} dernier>
           {config.aime.map((o) => <Text key={o} style={[s.detail, { color: wa.encre }]}>« {o} »</Text>)}

@@ -1,3 +1,4 @@
+import { HOTEL, avis } from './hotel'
 import { filsPerso } from './perso'
 
 /**
@@ -687,34 +688,22 @@ export const aides: Aide[] = [
 
 export const suggestionsAide = ['Créer une réservation', 'Voir mes disponibilités', 'Changer mes prix', 'Lier Mercado Pago', 'Qui doit payer ?', 'Créer une catégorie']
 
-/** Les types de chambre « trouvés » sur le site de l'hôtel, en démo. */
-export const chambresDuSite = [
-  { id: 'c1', nom: 'Double', stock: 3, prix: '68000' },
-  { id: 'c2', nom: 'Cabane 4', stock: 2, prix: '95000' },
-  { id: 'c3', nom: 'Dortoir (lit)', stock: 6, prix: '18000' },
-]
-
 /** Les statistiques par mois et par canal (écran Statistiques, depuis le Menu). */
 /** Ce que l'analyse du site, de Booking et de Google « trouve », en démo. */
 export const esquisse = {
   hotel: 'Hostal Los Andes',
   ville: 'Tilcara',
   type: 'Hostal',
-  chambres: [
-    { id: 'c1', nom: 'Double', stock: 6, prix: '68000' },
-    { id: 'c2', nom: 'Twin', stock: 4, prix: '62000' },
-    { id: 'c3', nom: 'Cabane 4', stock: 2, prix: '95000' },
-    { id: 'c4', nom: 'Dortoir (lit)', stock: 6, prix: '18000' },
-  ],
+  chambres: HOTEL.chambres,
   arrivee: '14 h',
   depart: '10 h',
-  options: ['Petit-déjeuner maison', 'Parking', 'Petits animaux acceptés', 'Excursions à cheval'],
-  aime: ['Le calme et la vue sur les montagnes', 'Le petit-déjeuner maison', 'L’accueil chaleureux de l’équipe'],
-  avis: { note: '4,7', nombre: 128 },
+  options: HOTEL.options,
+  aime: HOTEL.aime,
+  avis,
   sources: [
-    { nom: 'Site internet', trouve: 'Description, photos, horaires' },
-    { nom: 'Booking', trouve: '4 types de chambre, 18 unités, prix' },
-    { nom: 'Google', trouve: '128 avis, note 4,7' },
+    { nom: 'Booking', trouve: `${HOTEL.chambres.length} types de chambre, ${HOTEL.chambres.reduce((n, c) => n + c.stock, 0)} unités, prix, photos` },
+    { nom: 'Google', trouve: `${avis.nombre} avis, note ${avis.note}, adresse` },
+    { nom: 'Instagram', trouve: 'Photos, ton des réponses' },
   ],
 }
 
@@ -724,10 +713,16 @@ export const esquisse = {
  * dépasser le stock. L'occupation d'une nuit n'est que le compte des séjours.
  */
 
-/** Le stock de l'hôtel de démo, par type. */
-export const STOCK: Record<string, number> = { 'Double': 3, 'Cabane 4': 2, 'Dortoir': 6 }
+/** Le stock de l'hôtel de démo, par type, repris de ses chambres. */
+export const STOCK: Record<string, number> = Object.fromEntries(HOTEL.chambres.map((c) => [c.nom, c.stock]))
 export const UNITES = Object.values(STOCK).reduce((a, b) => a + b, 0)
-const PRIX: Record<string, number> = { 'Double': 68000, 'Cabane 4': 95000, 'Dortoir': 18000 }
+const CHAMBRE = Object.fromEntries(HOTEL.chambres.map((c) => [c.nom, c]))
+/**
+ * L'ordre de remplissage : les trois types d'origine d'abord, pour que les
+ * séjours tirés au hasard restent ceux d'avant (Martín sur la dernière double…).
+ */
+const ORDRE_REMPLISSAGE = ['Double', 'Cabane 4', 'Dortoir']
+const typesARemplir = [...ORDRE_REMPLISSAGE, ...Object.keys(STOCK).filter((t) => !ORDRE_REMPLISSAGE.includes(t))]
 
 const PRENOMS = ['Sofía Ramos', 'Mateo Castro', 'Valentina Ortiz', 'Joaquín Romero', 'Camila Suárez', 'Tomás Herrera',
   'Martina Aguirre', 'Benjamín Molina', 'Lucas Benítez', 'Julieta Medina', 'Facundo Acosta', 'Florencia Rojas',
@@ -755,7 +750,7 @@ function genererSejours(): Sejour[] {
   const AUJOURDHUI = '2026-10-30'
   // Les nuits prises, par unité.
   const unites: { type: string; nuits: Set<string> }[] = []
-  for (const [type, n] of Object.entries(STOCK)) for (let k = 0; k < n; k++) unites.push({ type, nuits: new Set() })
+  for (const type of typesARemplir) for (let k = 0; k < STOCK[type]; k++) unites.push({ type, nuits: new Set() })
   const libre = (u: { nuits: Set<string> }, debut: string, nb: number) => {
     for (let k = 0; k < nb; k++) if (u.nuits.has(plus(debut, k))) return false
     return true
@@ -787,13 +782,15 @@ function genererSejours(): Sejour[] {
         const ical = canal === 'booking' || canal === 'airbnb'
         const futur = jour >= AUJOURDHUI
         const statut: Sejour['statut'] = ical ? 'bloque' : futur && r() < 0.2 ? 'attente' : 'confirmee'
-        const montant = nb * PRIX[u.type]
+        const ch = CHAMBRE[u.type]
+        const montant = nb * Number(ch.prix)
         tous.push({
           id: `g${++n}`, nom: ical ? (canal === 'booking' ? 'Booking' : 'Airbnb') : PRENOMS[Math.floor(r() * PRENOMS.length)],
           chambre: u.type, debut: jour, fin: plus(jour, nb), statut, source: ical ? (canal === 'booking' ? 'Booking' : 'Airbnb') : undefined,
           canal, tel: canal === 'whatsapp' ? `+54 9 388 ${400 + Math.floor(r() * 500)}-${1000 + Math.floor(r() * 8999)}` : undefined,
-          adultes: u.type === 'Dortoir' ? 1 : u.type === 'Cabane 4' ? 2 + Math.floor(r() * 3) : 2,
-          enfants: u.type === 'Cabane 4' && r() < 0.5 ? 1 : 0,
+          // Mêmes tirages qu'avant pour les types d'origine : une cabane de 4 tire, un lit ou une double non.
+          adultes: ch.parLit || ch.capacite === 1 ? 1 : ch.capacite > 2 ? 2 + Math.floor(r() * (ch.capacite - 1)) : 2,
+          enfants: ch.capacite > 2 && r() < 0.5 ? 1 : 0,
           options: r() < 0.5 ? ['Petit-déjeuner'] : [],
           montant, paye: statut === 'attente' ? Math.round(montant * 0.3 * Math.floor(r() * 2)) : montant,
         })
