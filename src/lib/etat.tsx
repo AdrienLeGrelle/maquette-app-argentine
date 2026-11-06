@@ -14,11 +14,11 @@ export type Langue = 'es' | 'fr'
 export type Categorie = { id: string; nom: string; ids: string[] }
 
 /** Les étapes du questionnaire de Paramètres, dans l'ordre. */
-export const ETAPES = ['vous', 'site', 'hotel', 'chambres', 'regles', 'mercadopago', 'style', 'canaux'] as const
+export const ETAPES = ['vous', 'site', 'hotel', 'chambres', 'options', 'regles', 'mercadopago', 'style', 'canaux'] as const
 export type Etape = (typeof ETAPES)[number]
 /** Le démarrage rapide : de quoi lancer l'agent. Le reste se complète ensuite. */
 export const ETAPES_RAPIDES: Etape[] = ['vous', 'site', 'hotel', 'chambres']
-export const ETAPES_COMPLETES: Etape[] = ['regles', 'mercadopago', 'style', 'canaux']
+export const ETAPES_COMPLETES: Etape[] = ['options', 'regles', 'mercadopago', 'style', 'canaux']
 
 export type { Chambre, OptionHotel }
 export type Canal = 'instagram' | 'messenger' | 'booking' | 'mail'

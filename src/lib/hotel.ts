@@ -51,7 +51,8 @@ export type OptionHotel = {
   prix: number
   unite: Unite
   detail?: string
-  photo?: string
+  /** La première est celle qu'on montre d'abord. */
+  photos: string[]
   es?: { nom: string; detail?: string }
 }
 
@@ -68,7 +69,7 @@ const chambres: Chambre[] = [
     lits: '1 lit simple',
     description: 'Petite chambre calme qui donne sur le patio, idéale pour voyager seul.',
     equipements: ['Salle de bain privée', 'Wifi', 'Chauffage'],
-    photos: [photo('1522771739844-6a9f6d5f14af'), photo('1513694203232-719a280e022f'), photo('1584132967334-10e028bd69f7')],
+    photos: [photo('1522771739844-6a9f6d5f14af'), photo('1617325247661-675ab4b64ae2'), photo('1586105251261-72a756497a11'), photo('1513694203232-719a280e022f'), photo('1595515106969-1ce29566ff1c')],
     es: {
       nom: 'Habitación simple', lits: '1 cama individual',
       description: 'Habitación chica y tranquila que da al patio, ideal si viajás solo.',
@@ -80,7 +81,7 @@ const chambres: Chambre[] = [
     lits: '1 lit double',
     description: 'Chambre lumineuse avec un grand lit, autour du patio fleuri.',
     equipements: ['Salle de bain privée', 'Wifi', 'Chauffage', 'Serviettes'],
-    photos: [photo('1566665797739-1674de7a421a'), photo('1582719478250-c89cae4dc85b'), photo('1584132967334-10e028bd69f7')],
+    photos: [photo('1566665797739-1674de7a421a'), photo('1582719478250-c89cae4dc85b'), photo('1631049035182-249067d7618e'), photo('1631049421450-348ccd7f8949'), photo('1584622650111-993a426fbf0a')],
     es: {
       nom: 'Habitación doble', lits: '1 cama matrimonial',
       description: 'Habitación luminosa con cama matrimonial, alrededor del patio con flores.',
@@ -92,7 +93,7 @@ const chambres: Chambre[] = [
     lits: '2 lits simples',
     description: 'Deux lits séparés, pour des amis ou des collègues de voyage.',
     equipements: ['Salle de bain privée', 'Wifi', 'Chauffage'],
-    photos: [photo('1595576508898-0ad5c879a061'), photo('1584132967334-10e028bd69f7')],
+    photos: [photo('1595576508898-0ad5c879a061'), photo('1564013799919-ab600027ffc6'), photo('1604709177225-055f99402ea3')],
     es: {
       nom: 'Habitación twin', lits: '2 camas individuales',
       description: 'Dos camas separadas, para amigos o compañeros de viaje.',
@@ -104,7 +105,7 @@ const chambres: Chambre[] = [
     lits: '1 grand lit',
     description: 'Au premier étage, une grande baie vitrée face aux montagnes, une baignoire et un coin salon.',
     equipements: ['Vue sur les montagnes', 'Baignoire', 'Wifi', 'Chauffage', 'Bouilloire et maté'],
-    photos: [photo('1568495248636-6432b97bd949'), photo('1631049307264-da0ec9d70304'), photo('1552321554-5fefe8c9ef14')],
+    photos: [photo('1568495248636-6432b97bd949'), photo('1578683010236-d716f9a3f461'), photo('1631049307264-da0ec9d70304'), photo('1507652313519-d4e9174996dd')],
     es: {
       nom: 'Habitación superior con vista', lits: '1 cama king',
       description: 'En el primer piso, con un ventanal frente a los cerros, bañera y rincón de estar.',
@@ -116,7 +117,7 @@ const chambres: Chambre[] = [
     lits: '1 lit double et 2 lits superposés',
     description: 'Deux espaces : le lit double d’un côté, les lits superposés de l’autre. Les enfants adorent.',
     equipements: ['Salle de bain privée', 'Wifi', 'Chauffage', 'Lit bébé sur demande'],
-    photos: [photo('1590490360182-c33d57733427'), photo('1505693416388-ac5ce068fe85')],
+    photos: [photo('1590490360182-c33d57733427'), photo('1505693416388-ac5ce068fe85'), photo('1615874959474-d609969a20ed'), photo('1598928636135-d146006ff4be'), photo('1600566752355-35792bedcfea')],
     es: {
       nom: 'Habitación familiar', lits: '1 cama matrimonial y 1 cucheta',
       description: 'Dos ambientes: la cama matrimonial de un lado, la cucheta del otro. A los chicos les encanta.',
@@ -128,7 +129,7 @@ const chambres: Chambre[] = [
     lits: '1 lit double et 2 lits simples',
     description: 'Cabane indépendante en bois et adobe au fond du jardin, avec cuisine équipée et terrasse.',
     equipements: ['Cuisine équipée', 'Terrasse', 'Parrilla', 'Salle de bain privée', 'Wifi'],
-    photos: [photo('1542718610-a1d656d1884c'), photo('1611892440504-42a792e24d32'), photo('1556911220-bff31c812dba')],
+    photos: [photo('1542718610-a1d656d1884c'), photo('1587381420270-3e1a5b9e6904'), photo('1611892440504-42a792e24d32'), photo('1611892441796-ae6af0ec2cc8'), photo('1556911220-bff31c812dba')],
     es: {
       nom: 'Cabaña para 4', lits: '1 cama matrimonial y 2 individuales',
       description: 'Cabaña independiente de madera y adobe al fondo del jardín, con cocina equipada y galería.',
@@ -140,7 +141,7 @@ const chambres: Chambre[] = [
     lits: '6 lits superposés',
     description: 'Dortoir mixte de 6 lits, un casier avec cadenas par lit. Salle de bain partagée.',
     equipements: ['Casier', 'Draps fournis', 'Wifi', 'Salle de bain partagée'],
-    photos: [photo('1555854877-bab0e564b8d5'), photo('1520277739336-7bf67edfa768')],
+    photos: [photo('1555854877-bab0e564b8d5'), photo('1520277739336-7bf67edfa768'), photo('1617806118233-18e1de247200'), photo('1484154218962-a197022b5858'), photo('1626265774643-f1943311a86b')],
     es: {
       nom: 'Cama en dormitorio compartido', lits: '6 camas en cuchetas',
       description: 'Dormitorio mixto de 6 camas, cada una con su locker con candado. Baño compartido.',
@@ -151,22 +152,31 @@ const chambres: Chambre[] = [
 
 const options: OptionHotel[] = [
   { id: 'petitdej', nom: 'Petit-déjeuner', prix: 0, unite: 'nuitPersonne', detail: 'Fait maison, de 8 h à 10 h 30 au comedor',
-    photo: photo('1533089860892-a7c6f0a88666'), es: { nom: 'Desayuno casero', detail: 'De 8 a 10:30, en el comedor' } },
+    photos: [photo('1533089860892-a7c6f0a88666'), photo('1504754524776-8f4f37790ca0'), photo('1495474472287-4d71bcdd2085'), photo('1484723091739-30a097e8f929')],
+    es: { nom: 'Desayuno casero', detail: 'De 8 a 10:30, en el comedor' } },
   { id: 'diner', nom: 'Dîner régional', prix: 16000, unite: 'personne', detail: 'Locro, empanadas, humita… à réserver la veille',
-    photo: photo('1544148103-0773bf10d330'), es: { nom: 'Cena regional', detail: 'Locro, empanadas, humita… reservando el día anterior' } },
+    photos: [photo('1601050690597-df0568f70950'), photo('1600891964092-4316c288032e'), photo('1544148103-0773bf10d330')],
+    es: { nom: 'Cena regional', detail: 'Locro, empanadas, humita… reservando el día anterior' } },
   { id: 'cheval', nom: 'Excursion à cheval', prix: 35000, unite: 'personne', detail: 'Une demi-journée jusqu’à la Garganta del Diablo, avec un guide',
-    photo: photo('1553284965-83fd3e82fa5a'), es: { nom: 'Cabalgata', detail: 'Medio día hasta la Garganta del Diablo, con guía' } },
+    photos: [photo('1553284965-83fd3e82fa5a'), photo('1469474968028-56623f02e42e')],
+    es: { nom: 'Cabalgata', detail: 'Medio día hasta la Garganta del Diablo, con guía' } },
   { id: 'transfert', nom: 'Transfert depuis le terminal', prix: 6000, unite: 'sejour', detail: 'On vient vous chercher avec vos bagages',
+    photos: [photo('1469854523086-cc02fe5d8800'), photo('1544620347-c4fd4a3d5957')],
     es: { nom: 'Traslado desde la terminal', detail: 'Te buscamos con tu equipaje' } },
   { id: 'parking', nom: 'Parking', prix: 0, unite: 'sejour', detail: 'Couvert, devant l’entrée',
+    photos: [photo('1590674899484-d5640e854abe'), photo('1506521781263-d8422e82f27a')],
     es: { nom: 'Cochera', detail: 'Cubierta, frente a la entrada' } },
   { id: 'tardive', nom: 'Arrivée tardive (22 h)', prix: 0, unite: 'sejour', detail: 'Prévenez-nous : la clé vous attend',
+    photos: [photo('1558002038-1055907df827'), photo('1517991104123-1d56a6e81ed9')],
     es: { nom: 'Llegada tarde (22 h)', detail: 'Avisanos y te dejamos la llave' } },
   { id: 'depart', nom: 'Départ tardif (14 h)', prix: 15000, unite: 'sejour', detail: 'Selon les arrivées du jour',
+    photos: [photo('1616627561839-074385245ff6')],
     es: { nom: 'Salida tardía (14 h)', detail: 'Según las llegadas del día' } },
   { id: 'bebe', nom: 'Lit bébé', prix: 0, unite: 'sejour',
+    photos: [photo('1555252333-9f8e92e65df9')],
     es: { nom: 'Cuna' } },
   { id: 'animal', nom: 'Animal (chien)', prix: 5000, unite: 'nuit', detail: 'Les petits chiens sont les bienvenus',
+    photos: [photo('1543466835-00a7907e9de1'), photo('1548199973-03cce0bbc87b')],
     es: { nom: 'Mascota (perro)', detail: 'Los perros chicos son bienvenidos' } },
 ]
 
@@ -182,6 +192,7 @@ export const HOTEL = {
     photo('1560185007-cde436f6a4d0'),
     photo('1504754524776-8f4f37790ca0'),
     photo('1502672260266-1c1ef2d93688'),
+    photo('1586375300773-8384e3e4916f'),
   ],
   aime: ['Le calme et la vue sur les montagnes', 'Le petit-déjeuner maison', 'L’accueil chaleureux de l’équipe'],
 }

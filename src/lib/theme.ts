@@ -248,6 +248,9 @@ export function useFil(canal: 'instagram' | 'messenger'): CouleursFil {
   return sombre ? messengerSombre : messengerClair
 }
 
+/** Ce qui se pose sur une photo (« Couverture », la croix pour la retirer), quel que soit le thème. */
+export const surPhoto = { voile: 'rgba(0,0,0,0.55)', encre: '#FFFFFF' }
+
 /** Le dégradé de fond de la mise en route, du haut vers le bas. */
 export const degradeMiseEnRoute = ['#17484A', '#0F2A31', '#0A161B']
 

@@ -91,6 +91,9 @@ export default function Ajustes() {
           <Rangee cle="chambres" icon="bed" titre="Chambres et prix"
                   detail={config.chambres.length ? `${config.chambres.length} type${config.chambres.length > 1 ? 's' : ''}` : undefined}
                   fait={fait('chambres')} onPress={() => ouvrir('chambres')} />
+          <Rangee cle="options" icon="sparkles" titre="Options et services"
+                  detail={config.options.length ? `${config.options.length} option${config.options.length > 1 ? 's' : ''}` : undefined}
+                  fait={fait('options')} onPress={() => ouvrir('options')} />
           <Rangee cle="regles" icon="clock" titre="Arrivées, départs, paiement" detail={fait('regles') ? `${config.arrivee} – ${config.depart}` : undefined}
                   fait={fait('regles')} onPress={() => ouvrir('regles')} dernier />
         </Section>}

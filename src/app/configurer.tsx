@@ -5,7 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Champ, Coche, Compteur, Groupe, Interrupteur, Libelle, Note, Puces, Question } from '@/components/Formulaire'
 import { LogoCanal, type Logo } from '@/components/Logos'
 import { esquisse } from '@/lib/demo'
-import { prixOption } from '@/lib/hotel'
+import { Photos } from '@/components/Photos'
+import { UNITES_OPTION, prixOption, type OptionHotel } from '@/lib/hotel'
 import { ETAPES_COMPLETES, ETAPES_RAPIDES, useEtat, type Canal, type Etape } from '@/lib/etat'
 import { AvatarVide, Icon } from '@/lib/icons'
 import { telLisible } from '@/lib/tel'
@@ -136,6 +137,9 @@ function Contenu({ etape }: { etape: Etape }) {
                   <Icon name="x" size={20} color={wa.gris} />
                 </Pressable>
               </View>
+              <View style={[s.photosLigne, { borderTopColor: wa.ligne }]}>
+                <Photos photos={c.photos} onChange={(photos) => maj(c.id, { photos })} nom={c.nom} />
+              </View>
               <View style={[s.chambreLigne, { borderTopColor: wa.ligne }]}>
                 <Text style={[s.chambreLabel, { color: wa.encre }]}>Combien ?</Text>
                 <Compteur valeur={c.stock} onChange={(stock) => maj(c.id, { stock })} />
@@ -155,6 +159,49 @@ function Contenu({ etape }: { etape: Etape }) {
                      accessibilityRole="button" style={[s.ajouter, { borderColor: wa.chipBord }]}>
             <Icon name="plus" size={20} color={wa.vert} />
             <Text style={[s.ajouterTexte, { color: wa.vert }]}>Ajouter un type de chambre</Text>
+          </Pressable>
+        </Bloc>
+      )
+    }
+    case 'options': {
+      const maj = (id: string, o: Partial<OptionHotel>) =>
+        majConfig({ options: config.options.map((x) => (x.id === id ? { ...x, ...o } : x)) })
+      return (
+        <Bloc>
+          <Question titre="Vos options et services" sous="Ce que le voyageur peut ajouter à son séjour. Laissez le prix vide si c’est offert." />
+          {config.options.map((o) => (
+            <Groupe key={o.id}>
+              <View style={s.chambreHaut}>
+                <TextInput value={o.nom} onChangeText={(nom) => maj(o.id, { nom })} placeholder="Petit-déjeuner, parking, excursion…"
+                           placeholderTextColor={wa.gris} accessibilityLabel="Nom de l’option" style={[s.chambreNom, { color: wa.encre }]} />
+                <Pressable onPress={() => majConfig({ options: config.options.filter((x) => x.id !== o.id) })} hitSlop={10} accessibilityLabel="Supprimer">
+                  <Icon name="x" size={20} color={wa.gris} />
+                </Pressable>
+              </View>
+              <View style={[s.photosLigne, { borderTopColor: wa.ligne }]}>
+                <Photos photos={o.photos} onChange={(photos) => maj(o.id, { photos })} nom={o.nom} />
+              </View>
+              <View style={[s.chambreLigne, { borderTopColor: wa.ligne }]}>
+                <Text style={[s.chambreLabel, { color: wa.encre }]}>Prix</Text>
+                <View style={[s.prix, { backgroundColor: wa.champ }]}>
+                  <Text style={[s.prixDevise, { color: wa.gris }]}>$</Text>
+                  <TextInput value={o.prix ? String(o.prix) : ''} onChangeText={(v) => maj(o.id, { prix: Number(v.replace(/\D/g, '')) || 0 })}
+                             keyboardType="number-pad" placeholder="Offert" placeholderTextColor={wa.gris} accessibilityLabel="Prix en pesos"
+                             style={[s.prixChamp, num, { color: wa.encre }]} />
+                </View>
+              </View>
+              {o.prix > 0 && (
+                <View style={[s.uniteLigne, { borderTopColor: wa.ligne }]}>
+                  <Puces options={UNITES_OPTION.map((u) => u.fr)} valeur={UNITES_OPTION.find((u) => u.cle === o.unite)?.fr ?? null}
+                         onChange={(fr) => maj(o.id, { unite: UNITES_OPTION.find((u) => u.fr === fr)?.cle ?? o.unite })} />
+                </View>
+              )}
+            </Groupe>
+          ))}
+          <Pressable onPress={() => majConfig({ options: [...config.options, { id: `o${Date.now()}`, nom: '', prix: 0, unite: 'sejour', photos: [] }] })}
+                     accessibilityRole="button" style={[s.ajouter, { borderColor: wa.chipBord }]}>
+            <Icon name="plus" size={20} color={wa.vert} />
+            <Text style={[s.ajouterTexte, { color: wa.vert }]}>Ajouter une option</Text>
           </Pressable>
         </Bloc>
       )
@@ -445,6 +492,8 @@ const s = StyleSheet.create({
   chambreHaut: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 52 },
   chambreNom: { flex: 1, fontSize: 18, fontWeight: '600', minHeight: 44 },
   chambreLigne: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 58, borderTopWidth: StyleSheet.hairlineWidth },
+  photosLigne: { borderTopWidth: StyleSheet.hairlineWidth, marginRight: -16 },
+  uniteLigne: { borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: 12 },
   chambreLabel: { fontSize: 16 },
   prix: { flexDirection: 'row', alignItems: 'center', borderRadius: 10, paddingHorizontal: 10, minWidth: 130 },
   prixDevise: { fontSize: 17 },
