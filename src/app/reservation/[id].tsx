@@ -1,6 +1,6 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router'
 import { useRef, useState, type ComponentRef, type ReactNode } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { EnteteApercu, Messages } from '@/components/Fil'
 import { LogoCanal } from '@/components/Logos'
@@ -13,6 +13,10 @@ import { Icon, type IconName } from '@/lib/icons'
 import { num, useCouleurs, useFil, useWa } from '@/lib/theme'
 
 const NOMS_CANAUX = { whatsapp: 'WhatsApp', instagram: 'Instagram', booking: 'Booking', airbnb: 'Airbnb' }
+/** Ce qu'on peut toujours faire défiler sous une fiche courte, pour que le geste vers le bas déroule la conversation. */
+const ELAN = 56
+/** De combien remonter au-dessus du canal pour que la conversation se replie. */
+const SEUIL_REPLI = 48
 
 function jourLong(iso: string) {
   const d = date(iso)
@@ -22,7 +26,9 @@ function jourLong(iso: string) {
 /**
  * Le détail d'une réservation, ouvert depuis le calendrier. La conversation
  * qui l'a amenée se déroule sous le canal, pour retrouver une petite info
- * (le chien, l'heure d'arrivée) sans quitter la fiche.
+ * (le chien, l'heure d'arrivée) sans quitter la fiche. Elle se déroule
+ * d'elle-même quand on glisse jusqu'en bas, et se replie quand on remonte
+ * au-dessus du canal.
  */
 export default function Reservation() {
   const wa = useWa()
@@ -34,9 +40,30 @@ export default function Reservation() {
   const [fil, setFil] = useState(false)
   const defile = useRef<ComponentRef<typeof ScrollView>>(null)
   const yCanal = useRef(0)
+  const dernierY = useRef(0)
+  const ouvertA = useRef(0)
+  const [hauteurVue, setHauteurVue] = useState(0)
   const e = sejours.find((x) => x.id === id)
   if (!e) return <Redirect href="/calendario" />
   const conv = e.statut === 'bloque' ? undefined : e.convId ? convs.find((x) => x.id === e.convId) : echangeDuSejour(e, config.arrivee)
+
+  // Le sens compte : le repli fait lui-même remonter la page, et le déroulé la fait descendre jusqu'au canal.
+  // Juste après l'ouverture, le rebond du bas de page ne doit pas la refermer.
+  const suivre = (ev: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset, contentSize, layoutMeasurement } = ev.nativeEvent
+    const y = contentOffset.y
+    const descend = y > dernierY.current
+    const monte = y < dernierY.current
+    dernierY.current = y
+    if (!conv) return
+    if (!fil && descend && y + layoutMeasurement.height >= contentSize.height - 2) {
+      ouvertA.current = Date.now()
+      setFil(true)
+    } else if (fil && monte && y < yCanal.current - SEUIL_REPLI && Date.now() - ouvertA.current > 800) {
+      setFil(false)
+      defile.current?.scrollTo({ y: 0, animated: true })
+    }
+  }
 
   const bloque = e.statut === 'bloque'
   const nuits = ecart(e.debut, e.fin)
@@ -56,7 +83,9 @@ export default function Reservation() {
         <Text numberOfLines={1} style={[s.enteteTitre, { color: wa.encre }]}>{bloque ? `Bloqué · ${e.chambre}` : e.nom}</Text>
       </View>
 
-      <ScrollView ref={defile} contentContainerStyle={[s.contenu, { paddingBottom: insets.bottom + 24 }]}>
+      <ScrollView ref={defile} onScroll={suivre} scrollEventThrottle={16}
+                  onLayout={(ev) => setHauteurVue(ev.nativeEvent.layout.height)}
+                  contentContainerStyle={[s.contenu, { paddingBottom: insets.bottom + 24 }, conv && hauteurVue > 0 && { minHeight: hauteurVue + ELAN }]}>
         <View style={[s.statut, { backgroundColor: statut.fond }]}><Text style={[s.statutTexte, { color: statut.encre }]}>{statut.label}</Text></View>
 
         <View style={[s.dates, { backgroundColor: wa.champ }]}>
