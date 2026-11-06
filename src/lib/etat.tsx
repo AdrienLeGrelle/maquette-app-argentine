@@ -3,6 +3,7 @@ import { conversations as conversationsDemo, devis, sejours as sejoursDemo, type
 import { equipeDemo, type Acces, type Membre } from '@/lib/equipe'
 import { configDemo, type Chambre, type OptionHotel } from '@/lib/hotel'
 import { heurePlus, messageConfirmation, montantLien } from '@/lib/paiement'
+import { echangeDuSejour } from '@/lib/echanges'
 
 /**
  * État de la maquette, en mémoire : pas de back pour l'instant. Un
@@ -144,6 +145,10 @@ type Etat = {
   envoyerLien: (convId: string) => void
   /** Le retour du paiement (le webhook, simulé) : seul lui confirme la réservation. */
   payer: (sejourId: string) => void
+  /** Le reste réglé en espèces : c'est l'hôtelier qui l'a en main, c'est lui qui valide. */
+  encaisser: (sejourId: string) => void
+  /** Le lien Mercado Pago du reste, envoyé par l'hôtelier depuis la réservation, avec son mot au voyageur. */
+  envoyerReste: (sejourId: string, texte: string) => void
   /** Personne n'a payé : le lien expire et la chambre est libérée. */
   expirer: (sejourId: string) => void
   notif: Notif | null
@@ -203,6 +208,18 @@ function ajouterAuFil(cs: Conversation[], convId: string, nouveaux: Message[], c
     quand: { jour: 'hoy', heure: nouveaux[0].heure },
     messages: [...c.messages, ...nouveaux.map((m, i) => (i === 0 && c.quand.jour !== 'hoy' ? { ...m, jour: 'Aujourd’hui' } : m))],
   }))
+}
+
+/**
+ * Le fil d'une réservation que la démo n'a pas écrit à la main est reconstitué
+ * à l'affichage. Dès qu'on y ajoute quelque chose, on le garde tel quel : son
+ * histoire ne doit plus bouger quand la réservation change.
+ */
+function garderFil(cs: Conversation[], fil?: Conversation): Conversation[] {
+  if (!fil || cs.some((x) => x.id === fil.id)) return cs
+  // S'il finit déjà aujourd'hui, la suite ne rouvre pas la journée une seconde fois.
+  const finitAujourdhui = fil.messages.findLast((m) => m.jour)?.jour === 'Aujourd’hui'
+  return [...cs, finitAujourdhui ? { ...fil, quand: { jour: 'hoy', heure: fil.messages[fil.messages.length - 1].heure } } : fil]
 }
 
 /** La démo s'ouvre déjà connectée, sur les discussions. */
@@ -298,6 +315,36 @@ export function EtatProvider({ children }: { children: ReactNode }) {
       setSejours((ss) => ss.filter((x) => x.id !== sejourId))
       if (e.convId) setConvs((cs) => ajouterAuFil(cs, e.convId!, [{ de: 'hotel', heure: maintenant(), etape: { quoi: 'expire' } }], { colonne: 'other', enCours: false, ecrit: false }))
       setNotif((n) => ({ quoi: 'expire', nom: e.nom, montant: e.lien!.montant, convId: e.convId, n: (n?.n ?? 0) + 1 }))
+    },
+    encaisser: (sejourId) => {
+      const e = sejours.find((x) => x.id === sejourId)
+      if (!e || e.paye >= e.montant) return
+      const heure = maintenant()
+      const reste = e.montant - e.paye
+      const fil = e.convId ? undefined : echangeDuSejour(e, config.arrivee)
+      const convId = e.convId ?? fil!.id
+      // Un lien du reste encore ouvert ne sert plus : le voyageur a payé en main propre.
+      setSejours((ss) => ss.map((x) => (x.id !== sejourId ? x
+        : { ...x, convId, paye: x.montant, statut: 'confirmee', lien: x.lien && { ...x.lien, etat: 'payee' } })))
+      const etapes: Message[] = [{ de: 'hotel', heure, etape: { quoi: 'paye', montant: reste, especes: true } }]
+      if (e.statut === 'attente') etapes.push({ de: 'hotel', heure, etape: { quoi: 'confirmee' } })
+      setConvs((cs) => ajouterAuFil(garderFil(cs, fil), convId, etapes, { colonne: 'paid', ecrit: false }))
+    },
+    envoyerReste: (sejourId, texte) => {
+      const e = sejours.find((x) => x.id === sejourId)
+      if (!e || e.paye >= e.montant) return
+      const heure = maintenant()
+      const reste = e.montant - e.paye
+      const fil = e.convId ? undefined : echangeDuSejour(e, config.arrivee)
+      const convId = e.convId ?? fil!.id
+      // Rien n'est confirmé à l'envoi : seul le retour du paiement le fera.
+      setSejours((ss) => ss.map((x) => (x.id !== sejourId ? x : { ...x, convId, lien: { etat: 'attente', heure, montant: reste } })))
+      const nouveaux: Message[] = [
+        ...(texte.trim() ? [{ de: 'hotel' as const, heure, lu: false, texte: texte.trim() }] : []),
+        { de: 'hotel', heure, lu: false, lien: { sejour: e.id, chambre: e.chambre, debut: e.debut, fin: e.fin, montant: reste, total: e.montant, reste: true } },
+        { de: 'hotel', heure, etape: { quoi: 'attente' } },
+      ]
+      setConvs((cs) => ajouterAuFil(garderFil(cs, fil), convId, nouveaux, { colonne: 'unpaid', ecrit: false }))
     },
     lancerAgent: () => setAgentLance(true),
     checkins, regleContacts, setRegleContacts, agent, ordreFiltres, setOrdreFiltres, equipe, vue, setVue, membreVu,

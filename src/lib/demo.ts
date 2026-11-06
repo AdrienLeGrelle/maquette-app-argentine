@@ -35,12 +35,12 @@ export type Message = {
 export type Etape =
   | { quoi: 'retenue'; jusqua: string }
   | { quoi: 'attente' }
-  | { quoi: 'paye'; montant: number }
+  | { quoi: 'paye'; montant: number; especes?: boolean }
   | { quoi: 'confirmee' }
   | { quoi: 'expire' }
 
 /** Ce que montre la carte : le séjour qu'elle règle, et ce qu'elle demande sur le total. */
-export type CarteLien = { sejour: string; chambre: string; debut: string; fin: string; montant: number; total: number }
+export type CarteLien = { sejour: string; chambre: string; debut: string; fin: string; montant: number; total: number; reste?: boolean }
 
 /** Le lien de paiement d'un séjour, et où il en est. */
 export type LienPaiement = {

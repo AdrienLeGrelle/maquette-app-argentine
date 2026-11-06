@@ -22,7 +22,10 @@ export function useTexteEtape() {
     switch (e.quoi) {
       case 'retenue': return t(`Habitación retenida hasta las ${e.jusqua}`, `Chambre retenue jusqu’à ${e.jusqua}`)
       case 'attente': return t('Esperando el pago', 'En attente du paiement')
-      case 'paye': return peut('paiements') ? t(`Pago recibido · ${pesos(e.montant)}`, `Paiement reçu · ${pesos(e.montant)}`) : t('Pago recibido', 'Paiement reçu')
+      case 'paye': {
+        const quoi = e.especes ? t('Pago en efectivo', 'Paiement en espèces') : t('Pago recibido', 'Paiement reçu')
+        return peut('paiements') ? `${quoi} · ${pesos(e.montant)}` : quoi
+      }
       case 'confirmee': return t('Reserva confirmada', 'Réservation confirmée')
       case 'expire': return t('Enlace vencido · habitación liberada', 'Lien expiré · chambre libérée')
     }
@@ -70,7 +73,7 @@ export function CarteLien({ m, suite }: { m: Message & { lien: NonNullable<Messa
         </Text>
         {peut('paiements') && (
           <View style={s.montant}>
-            <Text style={[s.detail, { color: wa.encre }]}>{part < 100 ? t(`Seña ${part} %`, `Acompte ${part} %`) : 'Total'}</Text>
+            <Text style={[s.detail, { color: wa.encre }]}>{l.reste ? t('Saldo', 'Reste à payer') : part < 100 ? t(`Seña ${part} %`, `Acompte ${part} %`) : 'Total'}</Text>
             <Text style={[s.somme, num, { color: wa.encre }]}>{pesos(l.montant)}</Text>
           </View>
         )}

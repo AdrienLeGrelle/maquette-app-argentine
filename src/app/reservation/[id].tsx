@@ -1,6 +1,6 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router'
 import { useRef, useState, type ComponentRef, type ReactNode } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { EnteteApercu, Messages } from '@/components/Fil'
 import { LogoCanal } from '@/components/Logos'
@@ -29,6 +29,10 @@ function jourLong(iso: string) {
  * (le chien, l'heure d'arrivée) sans quitter la fiche. Elle se déroule
  * d'elle-même quand on glisse jusqu'en bas, et se replie quand on remonte
  * au-dessus du canal.
+ *
+ * S'il reste à payer, « Payer le reste » propose les espèces, que l'hôtelier
+ * valide à la main, ou un lien Mercado Pago du montant restant : le message
+ * attend tout écrit au bas de la conversation, il n'y a plus qu'à l'envoyer.
  */
 export default function Reservation() {
   const wa = useWa()
@@ -36,19 +40,28 @@ export default function Reservation() {
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
   const insta = useFil('instagram')
-  const { checkins, basculerCheckin, config, convs, peut, sejours } = useEtat()
+  const { checkins, basculerCheckin, config, convs, peut, sejours, encaisser, envoyerReste } = useEtat()
   const [fil, setFil] = useState(false)
   const defile = useRef<ComponentRef<typeof ScrollView>>(null)
   const yCanal = useRef(0)
   const dernierY = useRef(0)
-  const ouvertA = useRef(0)
+  // Juste après une ouverture, un mouvement vers le haut (le rebond du bas de page) ne referme rien.
+  const verrou = useRef(false)
   const [hauteurVue, setHauteurVue] = useState(0)
+  const [paiement, setPaiement] = useState<null | 'choix' | 'especes'>(null)
+  const [brouillon, setBrouillon] = useState<string | null>(null)
+  // La conversation s'ouvre pour le brouillon : on descend jusqu'à lui, pas jusqu'au canal.
+  const versBrouillon = useRef(false)
   const e = sejours.find((x) => x.id === id)
   if (!e) return <Redirect href="/calendario" />
   const conv = e.statut === 'bloque' ? undefined : e.convId ? convs.find((x) => x.id === e.convId) : echangeDuSejour(e, config.arrivee)
 
+  const verrouiller = () => {
+    verrou.current = true
+    setTimeout(() => { verrou.current = false }, 800)
+  }
+
   // Le sens compte : le repli fait lui-même remonter la page, et le déroulé la fait descendre jusqu'au canal.
-  // Juste après l'ouverture, le rebond du bas de page ne doit pas la refermer.
   const suivre = (ev: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = ev.nativeEvent
     const y = contentOffset.y
@@ -57,9 +70,9 @@ export default function Reservation() {
     dernierY.current = y
     if (!conv) return
     if (!fil && descend && y + layoutMeasurement.height >= contentSize.height - 2) {
-      ouvertA.current = Date.now()
+      verrouiller()
       setFil(true)
-    } else if (fil && monte && y < yCanal.current - SEUIL_REPLI && Date.now() - ouvertA.current > 800) {
+    } else if (fil && monte && y < yCanal.current - SEUIL_REPLI && !verrou.current) {
       setFil(false)
       defile.current?.scrollTo({ y: 0, animated: true })
     }
@@ -72,6 +85,24 @@ export default function Reservation() {
     : e.statut === 'attente' ? { label: e.lien?.etat === 'retenue' ? `Retenue jusqu’à ${e.lien.jusqua}` : 'À payer', fond: c.warnWash, encre: c.warnInk }
       : { label: 'Confirmée', fond: c.okWash, encre: c.ok }
   const personnes = [`${e.adultes} adulte${e.adultes > 1 ? 's' : ''}`, e.enfants ? `${e.enfants} enfant${e.enfants > 1 ? 's' : ''}` : null].filter(Boolean).join(', ')
+  const reste = bloque ? 0 : e.montant - e.paye
+  const lienEnvoye = e.lien?.etat === 'attente' && e.lien.montant === reste ? e.lien : undefined
+  const enInsta = conv?.canal === 'instagram'
+
+  const allerEnBas = () => defile.current?.scrollToEnd({ animated: true })
+  const preparerLien = () => {
+    setPaiement(null)
+    setBrouillon(`¡Hola ${e.nom.split(' ')[0]}! Te paso el link para abonar el saldo de la reserva 👇`)
+    verrouiller()
+    // Déjà ouverte : on attend que les deux choix se soient repliés pour descendre.
+    if (fil) setTimeout(allerEnBas, 320)
+    else { versBrouillon.current = true; setFil(true) }
+  }
+  const envoyerBrouillon = () => {
+    envoyerReste(e.id, brouillon ?? '')
+    setBrouillon(null)
+    setTimeout(allerEnBas, 80)
+  }
 
   return (
     <View style={[s.flex, { backgroundColor: wa.fond }]}>
@@ -121,6 +152,43 @@ export default function Reservation() {
           {!bloque && peut('paiements') && <Ligne icon="checkPlain" label="Déjà payé" valeur={pesos(e.paye)} nombre dernier
                             couleur={e.paye >= e.montant ? c.ok : c.warnInk} />}
           {bloque && <Ligne icon="info" label="Origine" valeur={`Importé du calendrier ${e.source}`} dernier />}
+          {reste > 0 && peut('paiements') && (
+            <>
+              <Pressable onPress={() => setPaiement((p) => (p ? null : 'choix'))} accessibilityRole="button" accessibilityState={{ expanded: !!paiement }}
+                         style={({ pressed }) => [s.ouvrir, { borderColor: wa.ligne, opacity: pressed ? 0.7 : 1 }]}>
+                <Icon name="card" size={18} color={wa.vert} />
+                <Text style={[s.ouvrirTexte, { color: wa.vert }]}>Payer le reste · <Text style={num}>{pesos(reste)}</Text></Text>
+                <View style={paiement && s.retourne}><Icon name="chevD" size={18} color={wa.vert} trait={2.2} /></View>
+              </Pressable>
+              <Deroulant ouvert={!!paiement}>
+                {paiement === 'especes' ? (
+                  <View style={s.especes}>
+                    <Text style={[s.especesTexte, { color: wa.encre }]}>
+                      Vous avez reçu <Text style={[num, s.gras]}>{pesos(reste)}</Text> en espèces ?
+                    </Text>
+                    <Text style={[s.choixSous, { color: wa.gris }]}>La réservation sera marquée payée.</Text>
+                    <View style={s.especesBoutons}>
+                      <Pressable onPress={() => setPaiement('choix')} accessibilityRole="button" hitSlop={8} style={s.annuler}>
+                        <Text style={[s.annulerTexte, { color: wa.gris }]}>Annuler</Text>
+                      </Pressable>
+                      <Pressable onPress={() => { encaisser(e.id); setPaiement(null) }} accessibilityRole="button"
+                                 style={({ pressed }) => [s.valider, { backgroundColor: wa.vert, opacity: pressed ? 0.85 : 1 }]}>
+                        <Icon name="checkPlain" size={17} color={wa.surVert} trait={2.6} />
+                        <Text style={[s.validerTexte, { color: wa.surVert }]}>Valider le paiement</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                ) : (
+                  <>
+                    <Choix titre="Espèces" sous="Reçu en main propre : vous validez" onPress={() => setPaiement('especes')}
+                           icone={<View style={[s.choixIcone, { backgroundColor: c.okWash }]}><Icon name="billet" size={20} color={c.ok} trait={1.8} /></View>} />
+                    <Choix titre="Mercado Pago" icone={<LogoCanal nom="mercadopago" size={36} />} onPress={preparerLien} dernier
+                           sous={lienEnvoye ? `Lien envoyé à ${lienEnvoye.heure} · le renvoyer` : `Lien à envoyer sur ${NOMS_CANAUX[e.canal]}`} />
+                  </>
+                )}
+              </Deroulant>
+            </>
+          )}
         </Section>
 
         {!bloque && (
@@ -143,11 +211,18 @@ export default function Reservation() {
                   </Pressable>
                   {/* Bord à bord dans la carte : le volet coupe ce qui dépasse, la marge se prend donc dehors. */}
                   <View style={s.bordABord}>
-                    <Deroulant ouvert={fil} onOuvert={() => defile.current?.scrollTo({ y: yCanal.current, animated: true })}>
+                    <Deroulant ouvert={fil} onOuvert={() => {
+                      if (versBrouillon.current) { versBrouillon.current = false; allerEnBas() }
+                      else defile.current?.scrollTo({ y: yCanal.current, animated: true })
+                    }}>
                       <EnteteApercu c={conv} />
-                      <View style={[s.fil, { backgroundColor: conv.canal === 'instagram' ? insta.fond : wa.papier }]}>
+                      <View style={[s.fil, { backgroundColor: enInsta ? insta.fond : wa.papier }]}>
                         <Messages c={conv} />
                       </View>
+                      {brouillon !== null && reste > 0 && (
+                        <SaisieLien texte={brouillon} setTexte={setBrouillon} montant={reste} onEnvoyer={envoyerBrouillon} onRetirer={() => setBrouillon(null)}
+                                    accent={enInsta ? insta.accent : wa.vert} surAccent={enInsta ? insta.surAccent : wa.surVert} />
+                      )}
                       <View style={s.pied}>
                         <Pressable onPress={() => setFil(false)} accessibilityRole="button" hitSlop={8} style={s.lienPied}>
                           <View style={s.retourne}><Icon name="chevD" size={16} color={wa.gris} trait={2.2} /></View>
@@ -194,8 +269,59 @@ function Ligne({ icon, label, valeur, nombre, dernier, couleur }: { icon: IconNa
   )
 }
 
+/** Une façon de payer, dans la liste qui se déroule sous « Payer le reste ». */
+function Choix({ icone, titre, sous, onPress, dernier }: { icone: ReactNode; titre: string; sous: string; onPress: () => void; dernier?: boolean }) {
+  const wa = useWa()
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button"
+               style={({ pressed }) => [s.choix, !dernier && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: wa.ligne }, pressed && { opacity: 0.7 }]}>
+      {icone}
+      <View style={s.flex}>
+        <Text style={[s.choixTitre, { color: wa.encre }]}>{titre}</Text>
+        <Text style={[s.choixSous, { color: wa.gris }]}>{sous}</Text>
+      </View>
+      <Icon name="chevR" size={18} color={wa.gris} trait={2} />
+    </Pressable>
+  )
+}
+
+/**
+ * Le message préparé au bas de la conversation : le lien Mercado Pago du reste
+ * en pièce jointe, un mot au voyageur dans sa langue, et le bouton d'envoi.
+ */
+function SaisieLien({ texte, setTexte, montant, accent, surAccent, onEnvoyer, onRetirer }: {
+  texte: string; setTexte: (v: string) => void; montant: number; accent: string; surAccent: string; onEnvoyer: () => void; onRetirer: () => void
+}) {
+  const wa = useWa()
+  const [hauteur, setHauteur] = useState(40)
+  return (
+    <View style={[s.saisie, { backgroundColor: wa.barre, borderTopColor: wa.ligne }]}>
+      <View style={[s.saisieBulle, { backgroundColor: wa.saisie, borderColor: wa.ligne }]}>
+        <View style={[s.piece, { backgroundColor: wa.apercuLien }]}>
+          <LogoCanal nom="mercadopago" size={30} />
+          <View style={s.flex}>
+            <Text style={[s.pieceTitre, { color: wa.encre }]}>Mercado Pago</Text>
+            <Text style={[s.pieceSous, { color: wa.gris }]}>Reste à payer · <Text style={num}>{pesos(montant)}</Text></Text>
+          </View>
+          <Pressable onPress={onRetirer} accessibilityRole="button" accessibilityLabel="Retirer le lien" hitSlop={10}>
+            <Icon name="x" size={16} color={wa.gris} trait={2} />
+          </Pressable>
+        </View>
+        <TextInput multiline value={texte} onChangeText={setTexte} accessibilityLabel="Message au voyageur"
+                   onContentSizeChange={(ev) => setHauteur(Math.min(120, Math.max(40, ev.nativeEvent.contentSize.height)))}
+                   style={[s.champ, { height: hauteur, color: wa.encre }]} />
+      </View>
+      <Pressable onPress={onEnvoyer} accessibilityRole="button" accessibilityLabel="Envoyer"
+                 style={({ pressed }) => [s.envoyer, { backgroundColor: accent, opacity: pressed ? 0.85 : 1 }]}>
+        <Icon name="send" size={18} color={surAccent} plein />
+      </Pressable>
+    </View>
+  )
+}
+
 const s = StyleSheet.create({
   flex: { flex: 1 },
+  gras: { fontWeight: '700' },
   droite: { alignItems: 'flex-end' },
   entete: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 8, paddingBottom: 8, borderBottomWidth: StyleSheet.hairlineWidth },
   retour: { minWidth: 36, minHeight: 44, justifyContent: 'center' },
@@ -228,4 +354,22 @@ const s = StyleSheet.create({
   pied: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 46, paddingHorizontal: 14 },
   lienPied: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44 },
   lienPiedTexte: { fontSize: 15, fontWeight: '600' },
+  choix: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, paddingVertical: 10 },
+  choixIcone: { width: 36, height: 36, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  choixTitre: { fontSize: 16, fontWeight: '600' },
+  choixSous: { fontSize: 13.5, marginTop: 1 },
+  especes: { paddingTop: 4, paddingBottom: 12, gap: 4 },
+  especesTexte: { fontSize: 16 },
+  especesBoutons: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 16, marginTop: 10 },
+  annuler: { paddingVertical: 6 },
+  annulerTexte: { fontSize: 15, fontWeight: '500' },
+  valider: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, paddingHorizontal: 16, minHeight: 40 },
+  validerTexte: { fontSize: 15, fontWeight: '600' },
+  saisie: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 10, paddingVertical: 8, borderTopWidth: StyleSheet.hairlineWidth },
+  saisieBulle: { flex: 1, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, padding: 4 },
+  piece: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 16, padding: 8 },
+  pieceTitre: { fontSize: 14, fontWeight: '600' },
+  pieceSous: { fontSize: 13, marginTop: 1 },
+  champ: { fontSize: 16, paddingHorizontal: 10, paddingVertical: 9 },
+  envoyer: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
 })
