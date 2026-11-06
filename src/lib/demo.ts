@@ -623,6 +623,8 @@ export type Sejour = {
   source?: 'Booking' | 'Airbnb'
   /** Par où la réservation est arrivée, et la discussion à rouvrir. */
   canal: 'whatsapp' | 'instagram' | 'booking' | 'airbnb'
+  /** Réservée par le voyageur lui-même, sur la page de l'hôtel. */
+  origine?: 'page'
   convId?: string
   tel?: string
   adultes: number

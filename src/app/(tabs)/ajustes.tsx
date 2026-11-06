@@ -98,6 +98,11 @@ export default function Ajustes() {
                   fait={fait('regles')} onPress={() => ouvrir('regles')} dernier />
         </Section>}
 
+        {gerant && <Section titre="Votre page">
+          <Rangee cle="page" icon="globe" titre="Page de réservation" onPress={() => router.push('/sitio')} dernier
+                  apres={<Text style={[s.rangeeDetail, { color: wa.gris }]}>Voir</Text>} />
+        </Section>}
+
         {gerant && <Section titre="Paiements et canaux">
           <Rangee cle="whatsapp" icon="whatsapp" titre="WhatsApp" detail={conecte ? telLisible(tel) : 'Non connecté'} fait={conecte}
                   onPress={() => router.push('/conectar')} />

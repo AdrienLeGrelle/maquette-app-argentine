@@ -148,11 +148,32 @@ type Etat = {
   expirer: (sejourId: string) => void
   notif: Notif | null
   fermerNotif: () => void
+  /**
+   * Une réservation faite par le voyageur sur la page de l'hôtel. Chaque unité
+   * (un lit par personne en dortoir) est retenue trente minutes, le temps de
+   * payer ; sans paiement prévu (« sur place »), elle attend l'hôtelier.
+   */
+  reserverEnLigne: (r: ReservationEnLigne) => { ids: string[]; jusqua: string; montant: number }
+  /** Le paiement Mercado Pago de la page arrive (webhook simulé) : seul lui confirme. */
+  payerEnLigne: (ids: string[]) => void
   /** Les boîtes branchées, WhatsApp en premier. */
   boites: Boite[]
   /** La boîte affichée dans Discussions ; revient à WhatsApp si son canal est débranché. */
   boite: Boite
   setBoite: (b: Boite) => void
+}
+
+export type ReservationEnLigne = {
+  nom: string
+  tel: string
+  chambre: string
+  debut: string
+  fin: string
+  unites: number
+  personnes: number
+  options: string[]
+  montant: number
+  sansPaiement?: boolean
 }
 
 /** « Perso » : l'assistant ne répond jamais. Le choix manuel l'emporte sur la règle. */
@@ -246,6 +267,30 @@ export function EtatProvider({ children }: { children: ReactNode }) {
           { colonne: 'paid', enCours: false, ecrit: false }))
       }
       setNotif((n) => ({ quoi: 'paye', nom: e.nom, montant, convId: e.convId, n: (n?.n ?? 0) + 1 }))
+    },
+    reserverEnLigne: (r) => {
+      const heure = maintenant()
+      const jusqua = heurePlus(heure, 30)
+      const montant = montantLien(r.montant, config.paiement)
+      const base = `page-${Date.now()}`
+      const ids = Array.from({ length: r.unites }, (_, k) => `${base}-${k}`)
+      // Une ligne par unité retenue : le calendrier compte des unités, un lit de dortoir en est une.
+      const lignes: Sejour[] = ids.map((id, k) => ({
+        id, nom: r.nom, chambre: r.chambre, debut: r.debut, fin: r.fin, statut: 'attente', canal: 'whatsapp', origine: 'page', tel: r.tel,
+        adultes: r.unites > 1 ? 1 : r.personnes, enfants: 0, options: k === 0 ? r.options : [],
+        montant: Math.round(r.montant / r.unites), paye: 0,
+        lien: r.sansPaiement ? undefined : { etat: 'retenue', heure, jusqua, montant: Math.round(montant / r.unites) },
+      }))
+      setSejours((ss) => [...ss, ...lignes].sort((a, b) => a.debut.localeCompare(b.debut)))
+      return { ids, jusqua, montant }
+    },
+    payerEnLigne: (ids) => {
+      const lignes = sejours.filter((x) => ids.includes(x.id) && x.lien)
+      if (!lignes.length) return
+      const montant = lignes.reduce((n, x) => n + (x.lien?.montant ?? 0), 0)
+      setSejours((ss) => ss.map((x) => (!ids.includes(x.id) || !x.lien ? x
+        : { ...x, statut: 'confirmee', paye: Math.min(x.montant, x.paye + x.lien.montant), lien: { ...x.lien, etat: 'payee' } })))
+      setNotif((n) => ({ quoi: 'paye', nom: lignes[0].nom, montant, n: (n?.n ?? 0) + 1 }))
     },
     expirer: (sejourId) => {
       const e = sejours.find((x) => x.id === sejourId)
