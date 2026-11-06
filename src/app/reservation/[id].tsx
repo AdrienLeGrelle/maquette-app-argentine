@@ -2,7 +2,7 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router'
 import { useRef, useState, type ComponentRef, type ReactNode } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Messages } from '@/components/Fil'
+import { EnteteApercu, Messages } from '@/components/Fil'
 import { LogoCanal } from '@/components/Logos'
 import { Deroulant } from '@/components/ui'
 import { JOURS_COURTS, MOIS, date, ecart } from '@/lib/dates'
@@ -112,24 +112,28 @@ export default function Reservation() {
                     <Text style={[s.ouvrirTexte, { color: wa.vert }]}>{fil ? 'Masquer la conversation' : 'Voir la conversation'}</Text>
                     <View style={fil && s.retourne}><Icon name="chevD" size={18} color={wa.vert} trait={2.2} /></View>
                   </Pressable>
-                  <Deroulant ouvert={fil} onOuvert={() => defile.current?.scrollTo({ y: yCanal.current, animated: true })}>
-                    <View style={[s.fil, { backgroundColor: conv.canal === 'instagram' ? insta.fond : wa.papier }]}>
-                      <Messages c={conv} />
-                    </View>
-                    <View style={s.pied}>
-                      <Pressable onPress={() => setFil(false)} accessibilityRole="button" hitSlop={8} style={s.lienPied}>
-                        <View style={s.retourne}><Icon name="chevD" size={16} color={wa.gris} trait={2.2} /></View>
-                        <Text style={[s.lienPiedTexte, { color: wa.gris }]}>Replier</Text>
-                      </Pressable>
-                      {e.convId && (
-                        <Pressable onPress={() => router.push({ pathname: '/chat/[id]', params: { id: conv.id } })}
-                                   accessibilityRole="button" hitSlop={8} style={s.lienPied}>
-                          <Text style={[s.lienPiedTexte, { color: wa.vert }]}>Répondre dans Discussions</Text>
-                          <Icon name="chevR" size={16} color={wa.vert} trait={2.2} />
+                  {/* Bord à bord dans la carte : le volet coupe ce qui dépasse, la marge se prend donc dehors. */}
+                  <View style={s.bordABord}>
+                    <Deroulant ouvert={fil} onOuvert={() => defile.current?.scrollTo({ y: yCanal.current, animated: true })}>
+                      <EnteteApercu c={conv} />
+                      <View style={[s.fil, { backgroundColor: conv.canal === 'instagram' ? insta.fond : wa.papier }]}>
+                        <Messages c={conv} />
+                      </View>
+                      <View style={s.pied}>
+                        <Pressable onPress={() => setFil(false)} accessibilityRole="button" hitSlop={8} style={s.lienPied}>
+                          <View style={s.retourne}><Icon name="chevD" size={16} color={wa.gris} trait={2.2} /></View>
+                          <Text style={[s.lienPiedTexte, { color: wa.gris }]}>Replier</Text>
                         </Pressable>
-                      )}
-                    </View>
-                  </Deroulant>
+                        {e.convId && (
+                          <Pressable onPress={() => router.push({ pathname: '/chat/[id]', params: { id: conv.id } })}
+                                     accessibilityRole="button" hitSlop={8} style={s.lienPied}>
+                            <Text style={[s.lienPiedTexte, { color: wa.vert }]}>Répondre dans Discussions</Text>
+                            <Icon name="chevR" size={16} color={wa.vert} trait={2.2} />
+                          </Pressable>
+                        )}
+                      </View>
+                    </Deroulant>
+                  </View>
                 </>
               )}
             </Section>
@@ -190,8 +194,9 @@ const s = StyleSheet.create({
   ouvrir: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 46, borderTopWidth: StyleSheet.hairlineWidth, marginBottom: 4 },
   ouvrirTexte: { fontSize: 16, fontWeight: '600' },
   retourne: { transform: [{ rotate: '180deg' }] },
-  fil: { marginHorizontal: -14, paddingHorizontal: 10, paddingVertical: 8, gap: 6 },
-  pied: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 46 },
+  bordABord: { marginHorizontal: -14 },
+  fil: { paddingHorizontal: 10, paddingVertical: 8, gap: 6 },
+  pied: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 46, paddingHorizontal: 14 },
   lienPied: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44 },
   lienPiedTexte: { fontSize: 15, fontWeight: '600' },
 })

@@ -46,6 +46,14 @@ function personas(e: Sejour) {
   return `para ${e.adultes} adultos${nenes}`
 }
 
+const PRENOMS_F = new Set(['Sofía', 'Valentina', 'Camila', 'Martina', 'Julieta', 'Florencia', 'Paula', 'Micaela', 'Rocío',
+  'Emilia', 'Agustina', 'Carolina', 'Abril', 'Carla', 'Lucía', 'Silvia', 'Hilda', 'Ana', 'Familia'])
+
+/** Une photo de profil de démonstration (randomuser.me), la même à chaque chargement. */
+function photo(nom: string, g: number) {
+  return `https://randomuser.me/api/portraits/${PRENOMS_F.has(nom.split(' ')[0]) ? 'women' : 'men'}/${g % 100}.jpg`
+}
+
 /** « @agustin.rios » : l'identifiant Instagram tiré du nom. */
 function compte(nom: string) {
   return '@' + nom.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '.')
@@ -111,7 +119,7 @@ export function echangeDuSejour(e: Sejour, arrivee: string): Conversation {
   }
 
   return {
-    id: `echange-${e.id}`, nom: e.nom, tel: e.tel ?? compte(e.nom),
+    id: `echange-${e.id}`, nom: e.nom, photo: photo(e.nom, g), tel: e.tel ?? compte(e.nom),
     canal: e.canal === 'instagram' ? 'instagram' : undefined,
     colonne: 'other', nonLus: 0, quand: { jour: 'date', date: jj(demande) }, messages: fil,
   }

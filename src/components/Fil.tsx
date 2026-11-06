@@ -5,8 +5,8 @@ import { CarteLien, PastilleEtape } from '@/components/Paiement'
 import { Points } from '@/components/Points'
 import type { Conversation, Message } from '@/lib/demo'
 import { canalDe, useT } from '@/lib/etat'
-import { Icon } from '@/lib/icons'
-import { useWa } from '@/lib/theme'
+import { Avatar, Icon } from '@/lib/icons'
+import { useFil, useWa } from '@/lib/theme'
 
 /**
  * Les messages d'une discussion, dessinés comme dans l'app d'origine :
@@ -38,6 +38,30 @@ export function Messages({ c }: { c: Conversation }) {
         </Fragment>
       ))}
     </>
+  )
+}
+
+/**
+ * Le haut d'un fil montré hors de Discussions (le détail d'une réservation) :
+ * la photo, le nom, et le numéro ou le compte, comme en haut de la discussion,
+ * pour savoir d'un coup d'œil avec qui l'on parle.
+ */
+export function EnteteApercu({ c }: { c: Conversation }) {
+  const wa = useWa()
+  const canal = canalDe(c)
+  const habit = canal === 'instagram' || canal === 'messenger' ? canal : null
+  const f = useFil(habit ?? 'instagram')
+  const ton = habit
+    ? { fond: f.fond, encre: f.encre, gris: f.gris, ligne: f.ligne, avatar: f.avatar, icone: f.avatarIcone }
+    : { fond: wa.barre, encre: wa.encre, gris: wa.gris, ligne: wa.ligne, avatar: wa.avatar, icone: wa.avatarIcone }
+  return (
+    <View style={[s.apercu, { backgroundColor: ton.fond, borderBottomColor: ton.ligne }]}>
+      <Avatar size={36} photo={c.photo} fond={ton.avatar} icone={ton.icone} />
+      <View style={s.flex}>
+        <Text numberOfLines={1} style={[s.apercuNom, { color: ton.encre }]}>{c.nom}</Text>
+        <Text numberOfLines={1} style={[s.apercuSous, { color: ton.gris }]}>{c.tel}</Text>
+      </View>
+    </View>
   )
 }
 
@@ -89,6 +113,10 @@ function Bulle({ m, suite }: { m: Message; suite: boolean }) {
 }
 
 const s = StyleSheet.create({
+  flex: { flex: 1 },
+  apercu: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth },
+  apercuNom: { fontSize: 16, fontWeight: '600' },
+  apercuSous: { fontSize: 13, marginTop: 1 },
   jour: { alignSelf: 'center', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, marginVertical: 6 },
   jourTexte: { fontSize: 12, fontWeight: '500' },
   bulle: { maxWidth: '80%', borderRadius: 12, paddingHorizontal: 9, paddingTop: 6, paddingBottom: 5, boxShadow: '0 1px 0.5px rgba(11,20,26,.13)' },
