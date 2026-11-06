@@ -1,13 +1,16 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router'
-import type { ReactNode } from 'react'
+import { useRef, useState, type ComponentRef, type ReactNode } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Messages } from '@/components/Fil'
 import { LogoCanal } from '@/components/Logos'
+import { Deroulant } from '@/components/ui'
 import { JOURS_COURTS, MOIS, date, ecart } from '@/lib/dates'
 import { pesos } from '@/lib/demo'
+import { echangeDuSejour } from '@/lib/echanges'
 import { useEtat } from '@/lib/etat'
 import { Icon, type IconName } from '@/lib/icons'
-import { num, useCouleurs, useWa } from '@/lib/theme'
+import { num, useCouleurs, useFil, useWa } from '@/lib/theme'
 
 const NOMS_CANAUX = { whatsapp: 'WhatsApp', instagram: 'Instagram', booking: 'Booking', airbnb: 'Airbnb' }
 
@@ -16,15 +19,24 @@ function jourLong(iso: string) {
   return `${JOURS_COURTS[d.getUTCDay()]} ${d.getUTCDate()} ${MOIS[d.getUTCMonth()]}`
 }
 
-/** Le détail d'une réservation, ouvert depuis le calendrier. */
+/**
+ * Le détail d'une réservation, ouvert depuis le calendrier. La conversation
+ * qui l'a amenée se déroule sous le canal, pour retrouver une petite info
+ * (le chien, l'heure d'arrivée) sans quitter la fiche.
+ */
 export default function Reservation() {
   const wa = useWa()
   const c = useCouleurs()
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
-  const { checkins, basculerCheckin, config, peut, sejours } = useEtat()
+  const insta = useFil('instagram')
+  const { checkins, basculerCheckin, config, convs, peut, sejours } = useEtat()
+  const [fil, setFil] = useState(false)
+  const defile = useRef<ComponentRef<typeof ScrollView>>(null)
+  const yCanal = useRef(0)
   const e = sejours.find((x) => x.id === id)
   if (!e) return <Redirect href="/calendario" />
+  const conv = e.statut === 'bloque' ? undefined : e.convId ? convs.find((x) => x.id === e.convId) : echangeDuSejour(e, config.arrivee)
 
   const bloque = e.statut === 'bloque'
   const nuits = ecart(e.debut, e.fin)
@@ -44,7 +56,7 @@ export default function Reservation() {
         <Text numberOfLines={1} style={[s.enteteTitre, { color: wa.encre }]}>{bloque ? `Bloqué · ${e.chambre}` : e.nom}</Text>
       </View>
 
-      <ScrollView contentContainerStyle={[s.contenu, { paddingBottom: insets.bottom + 24 }]}>
+      <ScrollView ref={defile} contentContainerStyle={[s.contenu, { paddingBottom: insets.bottom + 24 }]}>
         <View style={[s.statut, { backgroundColor: statut.fond }]}><Text style={[s.statutTexte, { color: statut.encre }]}>{statut.label}</Text></View>
 
         <View style={[s.dates, { backgroundColor: wa.champ }]}>
@@ -83,23 +95,45 @@ export default function Reservation() {
         </Section>
 
         {!bloque && (
-          <Section titre="Canal">
-            <View style={s.canal}>
-              <LogoCanal nom={e.canal === 'airbnb' ? 'booking' : e.canal} size={36} />
-              <View style={s.flex}>
-                <Text style={[s.canalNom, { color: wa.encre }]}>Réservé par {NOMS_CANAUX[e.canal]}</Text>
-                {e.tel && <Text style={[s.canalSous, num, { color: wa.gris }]}>{e.tel}</Text>}
+          <View onLayout={(ev) => { yCanal.current = ev.nativeEvent.layout.y }}>
+            <Section titre="Canal">
+              <View style={s.canal}>
+                <LogoCanal nom={e.canal === 'airbnb' ? 'booking' : e.canal} size={36} />
+                <View style={s.flex}>
+                  <Text style={[s.canalNom, { color: wa.encre }]}>Réservé par {NOMS_CANAUX[e.canal]}</Text>
+                  {e.tel && <Text style={[s.canalSous, num, { color: wa.gris }]}>{e.tel}</Text>}
+                </View>
               </View>
-            </View>
-            <Pressable onPress={() => e.convId && router.push({ pathname: '/chat/[id]', params: { id: e.convId } })}
-                       disabled={!e.convId} accessibilityRole="button"
-                       style={({ pressed }) => [s.ouvrir, { borderColor: wa.ligne, opacity: !e.convId ? 0.45 : pressed ? 0.7 : 1 }]}>
-              <Icon name="chat" size={18} color={wa.vert} />
-              <Text style={[s.ouvrirTexte, { color: wa.vert }]}>
-                {e.convId ? 'Ouvrir la conversation' : `Conversation ${NOMS_CANAUX[e.canal]} pas encore reliée`}
-              </Text>
-            </Pressable>
-          </Section>
+              {conv && (
+                <>
+                  <Pressable onPress={() => setFil((o) => !o)} accessibilityRole="button" accessibilityState={{ expanded: fil }}
+                             style={({ pressed }) => [s.ouvrir, { borderColor: wa.ligne, opacity: pressed ? 0.7 : 1 }]}>
+                    <Icon name="chat" size={18} color={wa.vert} />
+                    <Text style={[s.ouvrirTexte, { color: wa.vert }]}>{fil ? 'Masquer la conversation' : 'Voir la conversation'}</Text>
+                    <View style={fil && s.retourne}><Icon name="chevD" size={18} color={wa.vert} trait={2.2} /></View>
+                  </Pressable>
+                  <Deroulant ouvert={fil} onOuvert={() => defile.current?.scrollTo({ y: yCanal.current, animated: true })}>
+                    <View style={[s.fil, { backgroundColor: conv.canal === 'instagram' ? insta.fond : wa.papier }]}>
+                      <Messages c={conv} />
+                    </View>
+                    <View style={s.pied}>
+                      <Pressable onPress={() => setFil(false)} accessibilityRole="button" hitSlop={8} style={s.lienPied}>
+                        <View style={s.retourne}><Icon name="chevD" size={16} color={wa.gris} trait={2.2} /></View>
+                        <Text style={[s.lienPiedTexte, { color: wa.gris }]}>Replier</Text>
+                      </Pressable>
+                      {e.convId && (
+                        <Pressable onPress={() => router.push({ pathname: '/chat/[id]', params: { id: conv.id } })}
+                                   accessibilityRole="button" hitSlop={8} style={s.lienPied}>
+                          <Text style={[s.lienPiedTexte, { color: wa.vert }]}>Répondre dans Discussions</Text>
+                          <Icon name="chevR" size={16} color={wa.vert} trait={2.2} />
+                        </Pressable>
+                      )}
+                    </View>
+                  </Deroulant>
+                </>
+              )}
+            </Section>
+          </View>
         )}
       </ScrollView>
     </View>
@@ -155,4 +189,9 @@ const s = StyleSheet.create({
   canalSous: { fontSize: 14, marginTop: 2 },
   ouvrir: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 46, borderTopWidth: StyleSheet.hairlineWidth, marginBottom: 4 },
   ouvrirTexte: { fontSize: 16, fontWeight: '600' },
+  retourne: { transform: [{ rotate: '180deg' }] },
+  fil: { marginHorizontal: -14, paddingHorizontal: 10, paddingVertical: 8, gap: 6 },
+  pied: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 46 },
+  lienPied: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44 },
+  lienPiedTexte: { fontSize: 15, fontWeight: '600' },
 })

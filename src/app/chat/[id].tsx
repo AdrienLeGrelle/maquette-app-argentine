@@ -1,12 +1,11 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router'
-import { Fragment, useEffect, useRef, useState, type ComponentRef } from 'react'
+import { useEffect, useRef, useState, type ComponentRef } from 'react'
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { BulleFil, EcritFil, EnteteFil, JourFil, SaisieFil } from '@/components/Boites'
+import { EcritFil, EnteteFil, SaisieFil } from '@/components/Boites'
 import { Brouillons } from '@/components/Brouillons'
-import { BarreReservation, CarteLien, PastilleEtape, ProposerLien } from '@/components/Paiement'
-import { Points } from '@/components/Points'
-import type { Message } from '@/lib/demo'
+import { EcritWa, Messages } from '@/components/Fil'
+import { BarreReservation, ProposerLien } from '@/components/Paiement'
 import { brouillonsPerso } from '@/lib/perso'
 import { canalDe, estPourMoi, useEtat, useT } from '@/lib/etat'
 import { Avatar, Icon } from '@/lib/icons'
@@ -45,9 +44,6 @@ export default function Chat() {
         ? { icon: 'hand' as const, texte: 'Vous avez la main', bouton: 'Rendre à l’assistant', action: () => reprendreMain(c.id, false), couleur: wa.gris }
         : { icon: 'sparkles' as const, texte: 'L’assistant gère', bouton: 'Reprendre la main', action: () => reprendreMain(c.id, true), couleur: wa.vert }
 
-  const q = c.quand
-  const jour = q.jour === 'date' ? q.date : q.jour === 'semaine' ? t(q.es, q.fr) : q.jour === 'ayer' ? t('Ayer', 'Hier') : t('Hoy', 'Aujourd’hui')
-
   const mandar = () => {
     if (!texte.trim()) return
     envoyer(c.id, texte.trim())
@@ -58,8 +54,6 @@ export default function Chat() {
   const derniere = c.messages[c.messages.length - 1]
   const propositions = moi && derniere?.de === 'huesped' ? brouillonsPerso[c.id] : undefined
   const corriger = (p: string) => { setTexte(p); champ.current?.focus() }
-  // « Vu » ne se pose que sous le dernier message de l'hôtel que la personne a lu.
-  const dernierVu = c.messages.findLastIndex((m) => m.de === 'hotel' && !m.etape && !m.lien && m.lu)
 
   return (
     <KeyboardAvoidingView style={[s.flex, { backgroundColor: habit ? f.fond : wa.papier }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -93,25 +87,9 @@ export default function Chat() {
 
       <ScrollView ref={defile} contentContainerStyle={s.fil}
                   onContentSizeChange={() => defile.current?.scrollToEnd({ animated: false })}>
-        {!c.messages[0]?.jour && (habit ? <JourFil canal={habit} texte={`${jour} ${c.messages[0]?.heure ?? ''}`} /> : <Pastille texte={jour} />)}
-        {c.messages.map((m, i) => (
-          <Fragment key={i}>
-            {m.jour && (habit ? <JourFil canal={habit} texte={`${m.jour} ${m.heure}`} /> : <Pastille texte={m.jour} />)}
-            {m.etape ? <PastilleEtape etape={m.etape} />
-              : habit && !m.lien ? (
-                <BulleFil m={m} canal={habit} photo={c.photo} vu={i === dernierVu}
-                          premier={!memeEnvoi(c.messages[i - 1], m)} dernier={!memeEnvoi(m, c.messages[i + 1])} />
-              )
-              : m.lien ? <CarteLien m={{ ...m, lien: m.lien }} suite={i > 0 && !m.jour && c.messages[i - 1].de === m.de && !c.messages[i - 1].etape} />
-                : <Bulle m={m} suite={i > 0 && !m.jour && c.messages[i - 1].de === m.de && !c.messages[i - 1].etape} />}
-          </Fragment>
-        ))}
+        <Messages c={c} />
         {ecrit && habit && <EcritFil canal={habit} />}
-        {ecrit && !habit && (
-          <View style={[s.bulle, s.sortante, { backgroundColor: wa.bulleOut }]}>
-            <View style={s.ecrit}><Points color={wa.bulleMeta} taille={7} /></View>
-          </View>
-        )}
+        {ecrit && !habit && <EcritWa />}
       </ScrollView>
 
       {!moi && peut('reservations') && !lienIgnore && !ecriture && !texte && (
@@ -149,43 +127,6 @@ export default function Chat() {
   )
 }
 
-/** Deux messages du même envoi : même auteur, sans date ni pastille entre eux. */
-function memeEnvoi(a: Message | undefined, b: Message | undefined) {
-  return !!a && !!b && a.de === b.de && !b.jour && !a.etape && !b.etape && !a.lien && !b.lien
-}
-
-function Pastille({ texte }: { texte: string }) {
-  const wa = useWa()
-  return <View style={[s.jour, { backgroundColor: wa.pastille }]}><Text style={[s.jourTexte, { color: wa.bulleMeta }]}>{texte}</Text></View>
-}
-
-function Bulle({ m, suite }: { m: Message; suite: boolean }) {
-  const wa = useWa()
-  const sortante = m.de === 'hotel'
-  return (
-    <View style={[s.bulle, sortante ? s.sortante : s.entrante, { backgroundColor: sortante ? wa.bulleOut : wa.bulleIn }, suite && s.suite]}>
-      <View style={s.bulleCorps}>
-        {m.vocal ? (
-          <View style={s.vocal}>
-            <Icon name="play" size={22} color={wa.gris} plein />
-            <View style={s.onde}>
-              {[6, 12, 18, 10, 16, 8, 14, 20, 12, 7, 15, 9, 13, 6, 11, 17, 8, 12].map((h, i) => (
-                <View key={i} style={[s.barre, { height: h, backgroundColor: wa.gris }]} />
-              ))}
-            </View>
-          </View>
-        ) : (
-          <Text style={[s.texte, { color: wa.encre }]}>{m.texte}</Text>
-        )}
-        <View style={s.meta}>
-          <Text style={[s.heure, { color: wa.bulleMeta }]}>{m.vocal ? `${m.vocal}  ·  ${m.heure}` : m.heure}</Text>
-          {sortante && <Icon name="checks" size={16} color={m.lu ? wa.lu : wa.bulleMeta} />}
-        </View>
-      </View>
-    </View>
-  )
-}
-
 const s = StyleSheet.create({
   flex: { flex: 1 },
   entete: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 8, paddingBottom: 8, borderBottomWidth: StyleSheet.hairlineWidth },
@@ -198,20 +139,6 @@ const s = StyleSheet.create({
   tenueBouton: { borderWidth: 1.2, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
   tenueBoutonTexte: { fontSize: 13, fontWeight: '600' },
   fil: { padding: 10, paddingBottom: 14, gap: 6 },
-  jour: { alignSelf: 'center', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, marginVertical: 6 },
-  jourTexte: { fontSize: 12, fontWeight: '500' },
-  bulle: { maxWidth: '80%', borderRadius: 12, paddingHorizontal: 9, paddingTop: 6, paddingBottom: 5, boxShadow: '0 1px 0.5px rgba(11,20,26,.13)' },
-  entrante: { alignSelf: 'flex-start', borderTopLeftRadius: 4 },
-  sortante: { alignSelf: 'flex-end', borderTopRightRadius: 4 },
-  suite: { borderTopLeftRadius: 12, borderTopRightRadius: 12, marginTop: -3 },
-  bulleCorps: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-end' },
-  texte: { fontSize: 16, lineHeight: 21 },
-  meta: { flexDirection: 'row', alignItems: 'center', gap: 3, marginLeft: 'auto', paddingLeft: 8, transform: [{ translateY: 2 }] },
-  heure: { fontSize: 11 },
-  ecrit: { paddingVertical: 6, paddingHorizontal: 4 },
-  vocal: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4, minWidth: 200 },
-  onde: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  barre: { width: 3, borderRadius: 2 },
   saisie: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth },
   champ: { flex: 1, minHeight: 36, borderRadius: 18, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 14, fontSize: 16 },
   envoyer: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },

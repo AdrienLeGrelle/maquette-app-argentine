@@ -34,7 +34,7 @@ export function periode(debut: string, fin: string, langue: 'es' | 'fr') {
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
 
 /** « habitación doble » : le nom traduit pour le voyageur, en minuscule au milieu d'une phrase. */
-function chambreEs(nom: string) {
+export function chambreEs(nom: string) {
   const es = HOTEL.chambres.find((c) => c.nom === nom)?.es?.nom
   return es ? es.charAt(0).toLowerCase() + es.slice(1) : nom
 }

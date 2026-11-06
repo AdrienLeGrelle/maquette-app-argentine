@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react'
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { ActivityIndicator, Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Icon, type IconName } from '@/lib/icons'
 import { espace, rayon, tap, taille, useCouleurs } from '@/lib/theme'
@@ -83,6 +83,30 @@ export function Texte({ children, faible, centre }: { children: ReactNode; faibl
   return <Text style={[s.texte, centre && s.centre, { color: faible ? c.muted : c.ink2 }]}>{children}</Text>
 }
 
+/**
+ * Un volet qui se déroule vers le bas, et remonte au toucher suivant. Le
+ * contenu reste monté pour être mesuré ; seule la hauteur s'anime.
+ * `onOuvert` part une fois le volet tout à fait ouvert.
+ */
+export function Deroulant({ ouvert, onOuvert, children }: { ouvert: boolean; onOuvert?: () => void; children: ReactNode }) {
+  const [hauteur, setHauteur] = useState(0)
+  const [part] = useState(() => new Animated.Value(0))
+  const fin = useRef(onOuvert)
+  useEffect(() => { fin.current = onOuvert })
+
+  useEffect(() => {
+    Animated.timing(part, { toValue: ouvert ? 1 : 0, duration: 280, easing: Easing.out(Easing.cubic), useNativeDriver: false })
+      .start(({ finished }) => { if (finished && ouvert) fin.current?.() })
+  }, [ouvert, part])
+
+  return (
+    <Animated.View aria-hidden={!ouvert} pointerEvents={ouvert ? 'auto' : 'none'}
+                   style={[s.deroulant, { height: part.interpolate({ inputRange: [0, 1], outputRange: [0, hauteur] }) }]}>
+      <View style={s.deroulantContenu} onLayout={(e) => setHauteur(e.nativeEvent.layout.height)}>{children}</View>
+    </Animated.View>
+  )
+}
+
 const s = StyleSheet.create({
   flex: { flex: 1 },
   contenu: { padding: espace[5], gap: espace[4], flexGrow: 1 },
@@ -101,4 +125,6 @@ const s = StyleSheet.create({
   titreGrand: { fontSize: taille.display, lineHeight: 40, fontWeight: '700', letterSpacing: -0.5 },
   texte: { fontSize: taille.body, lineHeight: 24 },
   centre: { textAlign: 'center' },
+  deroulant: { overflow: 'hidden' },
+  deroulantContenu: { position: 'absolute', top: 0, left: 0, right: 0 },
 })
